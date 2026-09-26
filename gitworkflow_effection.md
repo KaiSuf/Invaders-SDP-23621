@@ -137,14 +137,26 @@ Only urgent administrative actions, such as restoring a broken `main`, may be ha
 
 ### Strategy
 
-Our team will mainly use **Rebase and Fast-Forward** for feature and fix branches.
+Our team will mainly use **Rebase and Fast-Forward** for feature, fix and docs branches.
+
+Before merging, the branch must be updated with the latest Effection main by rebasing onto it.
+After the PR is approved and all tests pass, the changes are integrated into main using a fast-forward merge.
+
 
 ```text
-feature branch
-      │
-      │ rebase onto main
-      ▼
-    main ◄── fast-forward
+            latest Effection main
+                       │
+                       ▼
+feature/vfx-effect ── rebase ──► feature/vfx-effect
+                                      │
+                                      │ PR + review
+                                      ▼
+                                Effection main
+                                      │
+                                fast-forward
+                                      │
+                                      ▼
+                             updated Effection main
 ```
 
 ### Why Rebase and Fast-Forward?
@@ -156,14 +168,16 @@ feature branch
 
 ### Merge Commit
 
-A normal **merge commit** will only be used when necessary, such as synchronizing changes from the upstream repository where preserving the upstream history is important.
+Since our team chose Trunk-Based Development (TBD), we aim to integrate small and completed changes into team main frequently while keeping branches short-lived. Therefore, merge commits will not be used for normal feature and bug-fix integration.
+
+Instead, a merge commit may be used when synchronising our team repository with the main class repository (upstream/main) when necessary.
 
 ### Conflict Resolution
 
 If a conflict occurs:
 
-1. The **branch author** should resolve the conflict first because they understand their changes best.
-2. The latest `main` should be incorporated into the branch before merging.
+1. The branch should first be updated with the latest team main.
+2. The **branch author** should resolve the conflict because they understand their changes best.
 3. The affected code should be reviewed carefully, especially shared files.
 4. The project must be compiled and tested again after resolving the conflict.
 5. If the conflict involves another team's work, the affected members should discuss and agree on the correct solution.
