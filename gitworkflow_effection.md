@@ -203,54 +203,80 @@ If a conflict occurs:
 
 ## 6. Overall Development Workflow
 
-The complete development process is:
+The overall development workflow defines the end-to-end process of a feature, bug fix, or documentation update. To maintain a clean linear history and ensure the `main` branch remains stable and playable at all times, our team follows a structured workflow to ensure that changes are developed and integrated in a controlled manner.  Each task is developed on a separate short-lived branch, kept up to date with `main`, and tested before being submitted for review. Once approved, changes are merged into `main` using our agreed merge strategy, helping the team maintain a stable project throughout development.
+
+The diagram below illustrates the visual overview of this process:
 
 ```mermaid
 flowchart TD
-    A[Choose Task] --> B[Create Branch from main]
-    B --> C[Implement Changes]
-    C --> D[Commit Changes]
-    D --> E[Pull/Rebase Latest main]
-    E --> F[Test and Compile]
-    F --> G[Open Pull Request]
-    G --> H[Code Review]
-    H --> I{Approved?}
-    I -- No --> C
-    I -- Yes --> J[Rebase and Merge into main]
-    J --> K[Delete Branch]
-    K --> L[Main remains stable]
+    A[Create Branch] --> B[Implement Changes]
+    B --> C[Commit Changes]
+    C --> D[Pull / Rebase Latest main]
+    D --> E{Conflict?}
+    E -- Yes --> F[Resolve Conflict]
+    F --> G[Compile & Test]
+    E -- No --> G
+    G --> H[Open Pull Request]
+    H --> I[Code Review]
+    I --> J{Approved?}
+    J -- No --> B
+    J -- Yes --> K[Rebase & Merge into main]
+    K --> L[Delete Branch]
+    L --> M[Main Remains Stable]
 ```
 
 ### Step-by-Step Process
 
-1. **Choose a task**
-   Select a feature, bug fix, or documentation task.
+1. **Create a branch**
 
-2. **Create a branch**
-   Create a short-lived branch from the latest `main`.
+      Create a short-lived branch from the latest `main` branch. Use the appropriate branch naming convention such as `feature/<description>`, `fix/<description>`, or `docs/<description>`.
 
-3. **Develop**
-   Implement the task and make small, logical commits.
+2. **Implement Changes**
 
-4. **Update the branch**
-   Rebase with the latest `main` to reduce possible conflicts.
+      Develop the assigned feature, fix, or documentation change on the branch. Keep the changes focused on one task.
 
-5. **Test**
-   Compile and run the game to verify that the changes work correctly.
+3. **Commit Changes**
 
-6. **Open a Pull Request**
-   Describe the changes and provide testing information.
+      Commit completed logical changes using clear and consistent commit messages following the agreed format:
 
-7. **Code Review**
-   Another team member reviews the PR and requests changes if necessary.
+   `type(scope): short description`
 
-8. **Merge**
-   Once approved, rebase and fast-forward the branch into `main`.
+4. **Pull / Rebase Latest main**
+   
+      Before opening a Pull Request, update the branch with the latest changes from `main` using rebase to reduce possible conflicts.
 
-9. **Delete the branch**
-   Remove the completed branch to keep the repository clean.
+5. **Check for Conflict**
+   
+      If a conflict occurs during the rebase, the branch author resolves the conflict and reviews the affected code before continuing. If there is no conflict, continue to testing.
 
-10. **Continue development**
-    The next task starts from the updated `main`.
+6. **Compile & Test**
+      
+      Compile the project and run the game to verify that the changes work correctly and do not break existing functionality.
+
+7. **Open a Pull Request**
+   
+      Open a Pull Request from the working branch to `main`. The PR should describe the changes made and the testing performed.
+
+8. **Code Review**
+   
+      Another team member reviews the PR and requests changes if necessary.
+
+9. **Check Approval**
+   
+      If changes are requested, update the branch and push the changes to the PR. If the PR is approved, proceed with the merge.
+
+10. **Rebase & Merge into main**
+   
+      Once approved, integrate the branch into `main` using the agreed rebase and fast-forward merge strategy.
+
+11. **Delete Branch**
+   
+      After the changes have been successfully merged, delete the completed branch to keep the repository clean.
+
+12. **Main Remains Stable**
+   
+      Following successful branch deletion, `main` is left in a stable, production-ready state. All developers pull the latest `main` to ensure their next feature branch starts from a verified baseline.
+      
 
 ---
+
