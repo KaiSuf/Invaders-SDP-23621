@@ -154,7 +154,11 @@ Only urgent administrative actions, such as restoring a broken `main`, may be ha
 
 ### Strategy
 
-Our team will mainly use **Rebase and Fast-Forward** for feature, fix and docs branches.
+Our team uses two main approaches depending on the type of work:
+* Feature and Bug-Fix Branches:
+   Merged using **Rebase and Fast-Forward** to keep our code history linear and clear.
+* Documentation Branches: 
+   Merged using **Squash** to combine small text edits and typo fixes into a single clean commit.
 
 Before merging, the branch must be updated with the latest Effection main by rebasing onto it.
 After the PR is approved and all tests pass, the changes are integrated into main using a fast-forward merge.
@@ -179,8 +183,8 @@ feature/vfx-effect ── rebase ──► feature/vfx-effect
 ### Why Rebase and Fast-Forward?
 
 * Keeps the history simple and linear.
-* Makes individual changes easier to understand.
-* Reduces unnecessary merge commits.
+* Makes individual changes easier to understand in git history tools.
+* Eliminates clutter from repetitive merge commits.
 * Makes it easier to identify and revert problematic changes.
 
 ### Merge Commit
@@ -193,11 +197,16 @@ Instead, a merge commit may be used when synchronising our team repository with 
 
 If a conflict occurs:
 
-1. The branch should first be updated with the latest team main.
-2. The **branch author** should resolve the conflict because they understand their changes best.
-3. The affected code should be reviewed carefully, especially shared files.
-4. The project must be compiled and tested again after resolving the conflict.
-5. If the conflict involves another team's work, the affected members should discuss and agree on the correct solution.
+1. **Local Rebase First:** 
+      The branch author must pull the latest `main` and resolve any conflicts on their local computer before opening a Pull Request.
+2. **Consult File Owners:** 
+      If a conflict happens in a core shared file, consult the team member responsible for that file before finishing the merge.
+3. **Protect Game Assets:** 
+      For graphic files, sprite lists, and resource settings, **do not delete a teammate's changes**. Combine both versions so game visuals do not break.
+4. **Re-Test Immediately:** 
+      After resolving conflicts, always compile and launch the game locally to confirm that gameplay and visual effects still work correctly.
+5. **Ask for Help if Stuck:** 
+      If a conflict involves another team's work or cannot be resolved easily, discuss it in the team channel or consult the instructor.
 
 ---
 
