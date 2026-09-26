@@ -156,32 +156,52 @@ Only urgent administrative actions, such as restoring a broken `main`, may be ha
 
 Our team will mainly use **Rebase and Fast-Forward** for feature, fix and docs branches.
 
-Before merging, the branch must be updated with the latest Effection main by rebasing onto it.
-After the PR is approved and all tests pass, the changes are integrated into main using a fast-forward merge.
+Before merging, the branch has to be updated with the latest team `main` by rebasing onto it. Once the PR is approved and CI is green, we merge the branch into `main`. Since the branch is already sitting on top of the latest `main`, the merge is just a fast-forward, so no extra merge commit is created.
+
+On GitHub we pick the **"Rebase and merge"** button for this. It rebases our commits on top of `main` and keeps the history linear, which is the closest thing to rebase + fast-forward in the web interface.
+
+Doing it from the terminal looks like this:
+
+```bash
+git checkout main
+git pull
+
+git checkout feature/vfx-effect
+git rebase main                 # replay our commits on top of the latest main
+git push --force-with-lease     # update our own branch only
+
+git checkout main
+git merge --ff-only feature/vfx-effect
+```
+
+Two safety rules we follow here:
+
+* We only force-push our own short-lived branch, and only with `--force-with-lease`, so we do not overwrite someone else's work.
+* We never force-push `main`.
 
 
 ```text
-            latest Effection main
+            latest team main
                        │
                        ▼
 feature/vfx-effect ── rebase ──► feature/vfx-effect
                                       │
                                       │ PR + review
                                       ▼
-                                Effection main
+                                team main
                                       │
                                 fast-forward
                                       │
                                       ▼
-                             updated Effection main
+                             updated team main
 ```
 
 ### Why Rebase and Fast-Forward?
 
-* Keeps the history simple and linear.
-* Makes individual changes easier to understand.
-* Reduces unnecessary merge commits.
-* Makes it easier to identify and revert problematic changes.
+* The history stays straight, so it is easy to read.
+* Each change stays as its own small commit.
+* We get fewer merge commits, which keeps the log clean.
+* If something breaks, it is easy to find the commit that caused it and revert it.
 
 ### Merge Commit
 
