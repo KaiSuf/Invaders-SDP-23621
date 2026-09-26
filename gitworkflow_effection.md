@@ -62,19 +62,18 @@ Each commit should contain **one logical change**.
 A commit should:
 
 * Be related to the current task.
-* Compile successfully.
+* Compile successfully whenever possible.
 * Not contain unrelated changes.
 * Not include debug code, temporary files, or generated files.
 * Keep the game playable whenever possible.
-
-Avoid combining multiple unrelated features into one commit.
+* Avoid mixing multiple features, bug fixes, or documentation changes in one commit.
 
 ### Commit Message Format
 
 We will use the following format:
 
 ```text
-<type>: <short description>
+<type>(<scope>): <short description>
 ```
 
 Common types:
@@ -87,18 +86,36 @@ Common types:
 | `refactor` | Code restructuring      |
 | `perf`     | Performance improvement |
 | `chore`    | Maintenance             |
+| `revert`   | Revert previous commit  |
+
+**Scope** shows which part of the project the commit affects.
+It is written in lowercase inside parentheses, right after the type.
+
+| Scope       | Area                              |
+| ----------- | --------------------------------- |
+| `particles` | Particle system and particle pool |
+| `explosion` | Explosion effects                 |
+| `trail`     | Bullet and movement trails        |
+| `events`    | VFX event system                  |
+
+Example: `feat(explosion): add enemy explosion effect`
+means a new feature was added to the explosion effects.
 
 ### Examples
 
 ```text
-feat: add enemy explosion effect
-fix: fix particle cleanup
-docs: update effect event documentation
-perf: reduce particle usage
+feat(explosion): add enemy explosion effect
+fix(particles): fix particle cleanup
+docs(events): update effect event documentation
+perf(trail): reduce bullet trail particles
 ```
 
 Commit messages should be short, clear, and describe **what was changed**.
 
+Before commiting, developers should check their changes with : 
+
+* git status 
+* git diff
 ---
 
 ## 4. Pull Request and Code Review Rules
