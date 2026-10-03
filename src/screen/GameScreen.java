@@ -2,6 +2,10 @@ package screen;
 
 import java.awt.event.KeyEvent;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import engine.Cooldown;
@@ -36,6 +40,30 @@ public class GameScreen extends Screen {
 	private static final int BONUS_SHIP_EXPLOSION = 500;
 	/** Time from finishing the level to screen change. */
 	private static final int SCREEN_CHANGE_INTERVAL = 1500;
+	/** Pause after the player ship explodes, before enemies disappear. */
+	private static final int GAME_OVER_PAUSE = 500;
+	/** Time between the first enemy rows starting to shrink on game over. */
+	private static final int GAME_OVER_ROW_INTERVAL_START = 400;
+	/** Fastest time between enemy rows starting to shrink on game over. */
+	private static final int GAME_OVER_ROW_INTERVAL_MIN = 250;
+	/** Reduction of the row interval after each enemy row starts. */
+	private static final int GAME_OVER_ROW_INTERVAL_STEP = 50;
+	/** Time an enemy takes to shrink and fade out on game over. */
+	private static final int GAME_OVER_SHRINK_DURATION = 450;
+	/** Time after the last enemy disappears before the banner appears. */
+	private static final int GAME_OVER_LAST_ROW_HOLD = 400;
+	/** Text of the game over banner. */
+	private static final String GAME_OVER_TEXT = "GAME OVER";
+	/** Time between each letter of the game over banner appearing. */
+	private static final int GAME_OVER_TYPE_INTERVAL = 100;
+	/** Time the game over banner stays on or off while blinking. */
+	private static final int GAME_OVER_BLINK_INTERVAL = 200;
+	/** Number of times the game over banner blinks. */
+	private static final int GAME_OVER_BLINK_COUNT = 3;
+	/** Time the game over banner stays steady before fading out. */
+	private static final int GAME_OVER_TEXT_HOLD = 600;
+	/** Time the fade to black takes before the game over menu. */
+	private static final int GAME_OVER_FADE_DURATION = 800;
 	/** How long an achievement unlock popup remains visible. */
 	private static final int ACHIEVEMENT_POPUP_INTERVAL = 3000;
 	/** Height of the interface separation line. */
@@ -57,6 +85,20 @@ public class GameScreen extends Screen {
 	private Cooldown enemyShipSpecialExplosionCooldown;
 	/** Time from finishing the level to screen change. */
 	private Cooldown screenFinishedCooldown;
+	/** Time until the next enemy row explodes on game over. */
+	private Cooldown gameOverRowCooldown;
+	/** Current time between enemy rows starting to shrink on game over. */
+	private int gameOverRowInterval;
+	/** Enemies shrinking on game over, with the moment each one started. */
+	private Map<EnemyShip, Long> shrinkingEnemies;
+	/** Moment the last enemy disappeared, 0 while enemies remain. */
+	private long gameOverLastEnemyGone;
+	/** Moment the game over banner starts appearing. */
+	private long gameOverBannerStart;
+	/** Checks if the game over sequence is playing. */
+	private boolean gameOverActive;
+	/** Checks if the game over banner is shown. */
+	private boolean showGameOverText;
 	/** Time until the achievement unlock popup closes. */
 	private Cooldown achievementPopupCooldown;
 	/** Achievement currently shown in the unlock popup. */
@@ -208,6 +250,14 @@ public class GameScreen extends Screen {
 		cleanBullets();
 		draw();
 
+		// Game over sequence, only when the player runs out of lives.
+		if (this.lives == 0 && !this.levelFinished)
+			startGameOverSequence();
+		if (this.gameOverActive) {
+			updateGameOverSequence();
+			return;
+		}
+
 		if ((this.enemyShipFormation.isEmpty() || this.lives == 0)
 				&& !this.levelFinished) {
 			this.levelFinished = true;
@@ -217,6 +267,138 @@ public class GameScreen extends Screen {
 		if (this.levelFinished && this.screenFinishedCooldown.checkFinished())
 			this.isRunning = false;
 
+	}
+
+	/**
+	 * Starts the game over sequence: the player ship explodes, then after a
+	 * pause the remaining enemies shrink away row by row.
+	 */
+	private void startGameOverSequence() {
+		this.levelFinished = true;
+		this.gameOverActive = true;
+
+		// Shows the player ship explosion; it stays since the ship is no
+		// longer updated.
+		this.ship.update();
+
+		BulletPool.recycle(this.bullets);
+		this.bullets.clear();
+
+		// Clears explosions left from enemies shot just before.
+		this.enemyShipFormation.removeDestroyed();
+		this.shrinkingEnemies = new LinkedHashMap<EnemyShip, Long>();
+
+		this.gameOverRowInterval = GAME_OVER_ROW_INTERVAL_START;
+		this.gameOverRowCooldown = Core.getCooldown(GAME_OVER_PAUSE);
+		this.gameOverRowCooldown.reset();
+		this.logger.info("Game over, starting disappear sequence.");
+	}
+
+	/**
+	 * Makes the next enemy row start shrinking, speeding up after each row,
+	 * shows the game over banner once no enemies are left, then ends the
+	 * screen.
+	 */
+	private void updateGameOverSequence() {
+		long now = System.currentTimeMillis();
+		if (this.showGameOverText) {
+			if (now - this.gameOverBannerStart
+					>= getGameOverFadeStart() + GAME_OVER_FADE_DURATION)
+				this.isRunning = false;
+			return;
+		}
+
+		// Clears a bonus ship explosion (shot just before game over) after
+		// its usual time, as gameplay does, since that update no longer runs.
+		if (this.enemyShipSpecial != null
+				&& this.enemyShipSpecial.isDestroyed()
+				&& this.enemyShipSpecialExplosionCooldown.checkFinished())
+			this.enemyShipSpecial = null;
+
+		// Removes enemies that finished shrinking.
+		Iterator<Long> starts = this.shrinkingEnemies.values().iterator();
+		while (starts.hasNext())
+			if (now - starts.next() >= GAME_OVER_SHRINK_DURATION)
+				starts.remove();
+
+		if (!this.gameOverRowCooldown.checkFinished())
+			return;
+
+		List<EnemyShip> row = this.enemyShipFormation.removeBottomRow();
+		if (!row.isEmpty()) {
+			for (EnemyShip enemyShip : row)
+				this.shrinkingEnemies.put(enemyShip, now);
+			this.gameOverRowCooldown = Core.getCooldown(
+					this.gameOverRowInterval);
+			this.gameOverRowCooldown.reset();
+			this.gameOverRowInterval = Math.max(GAME_OVER_ROW_INTERVAL_MIN,
+					this.gameOverRowInterval - GAME_OVER_ROW_INTERVAL_STEP);
+		} else if (this.enemyShipSpecial != null
+				&& !this.enemyShipSpecial.isDestroyed()) {
+			// The bonus ship sits above the formation, so it goes last.
+			this.shrinkingEnemies.put(this.enemyShipSpecial, now);
+			this.enemyShipSpecial = null;
+		} else if (this.shrinkingEnemies.isEmpty()) {
+			// Short beat on the empty screen before the banner.
+			if (this.gameOverLastEnemyGone == 0)
+				this.gameOverLastEnemyGone = now;
+			if (now - this.gameOverLastEnemyGone >= GAME_OVER_LAST_ROW_HOLD) {
+				this.enemyShipSpecial = null;
+				this.showGameOverText = true;
+				this.gameOverBannerStart = now;
+			}
+		}
+	}
+
+	/**
+	 * Draws the enemies shrinking and fading away on game over.
+	 */
+	private void drawShrinkingEnemies() {
+		long now = System.currentTimeMillis();
+		for (Map.Entry<EnemyShip, Long> entry
+				: this.shrinkingEnemies.entrySet()) {
+			double progress = (double) (now - entry.getValue())
+					/ GAME_OVER_SHRINK_DURATION;
+			drawManager.drawEntityShrunk(entry.getKey(), 1 - progress);
+		}
+	}
+
+	/**
+	 * Gets the time, from the banner start, when the fade to black begins.
+	 *
+	 * @return Milliseconds after the banner starts.
+	 */
+	private int getGameOverFadeStart() {
+		return GAME_OVER_TEXT.length() * GAME_OVER_TYPE_INTERVAL
+				+ GAME_OVER_BLINK_COUNT * GAME_OVER_BLINK_INTERVAL * 2
+				+ GAME_OVER_TEXT_HOLD;
+	}
+
+	/**
+	 * Draws the game over banner: typed out letter by letter, then blinking,
+	 * then the screen fades to black.
+	 */
+	private void drawGameOverSequence() {
+		long elapsed = System.currentTimeMillis() - this.gameOverBannerStart;
+		int typeTime = GAME_OVER_TEXT.length() * GAME_OVER_TYPE_INTERVAL;
+		int blinkTime = GAME_OVER_BLINK_COUNT * GAME_OVER_BLINK_INTERVAL * 2;
+
+		if (elapsed < typeTime) {
+			drawManager.drawGameOverBanner(this, GAME_OVER_TEXT,
+					(int) (elapsed / GAME_OVER_TYPE_INTERVAL) + 1);
+		} else {
+			long blinkElapsed = elapsed - typeTime;
+			boolean visible = blinkElapsed >= blinkTime
+					|| (blinkElapsed / GAME_OVER_BLINK_INTERVAL) % 2 == 1;
+			if (visible)
+				drawManager.drawGameOverBanner(this, GAME_OVER_TEXT,
+						GAME_OVER_TEXT.length());
+		}
+
+		long fadeElapsed = elapsed - getGameOverFadeStart();
+		if (fadeElapsed > 0)
+			drawManager.drawFadeOverlay(this, (int) (fadeElapsed * 255
+					/ GAME_OVER_FADE_DURATION));
 	}
 
 	/**
@@ -260,6 +442,11 @@ public class GameScreen extends Screen {
 			drawManager.drawHorizontalLine(this, this.height / 2 + this.height
 					/ 12);
 		}
+
+		if (this.shrinkingEnemies != null)
+			drawShrinkingEnemies();
+		if (this.showGameOverText)
+			drawGameOverSequence();
 
 		drawManager.completeDrawing(this);
 	}
