@@ -519,7 +519,6 @@ public class GameScreen extends Screen {
 					/ 12);
 		}
 
-
 		// Game over animation. AUTHORED BY: VFX TEAM (Effection)
 		if (this.shrinkingEnemies != null)
 			drawShrinkingEnemies();

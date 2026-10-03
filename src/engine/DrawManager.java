@@ -861,8 +861,11 @@ public final class DrawManager {
 	}
 
 	/**
+<<<<<<< HEAD
 	 * AUTHORED BY: VFX TEAM (Effection)
 	 * Any further inquiries please contact us.
+=======
+>>>>>>> 0e054c1 (feat(gameover): add game over animation)
 	 * Draws an entity shrunk around its center and faded, used when enemies
 	 * disappear on game over.
 	 *
@@ -896,13 +899,19 @@ public final class DrawManager {
 	}
 
 	/**
+<<<<<<< HEAD
 	 * AUTHORED BY: VFX TEAM (Effection)
 	 * Any further inquiries please contact us.
+=======
+>>>>>>> 0e054c1 (feat(gameover): add game over animation)
 	 * Draws the game over banner shown on the game screen, typed out up to
 	 * the given number of characters. The text stays centered as a whole so
 	 * letters do not shift while typing.
 	 *
+<<<<<<< HEAD
 	 *
+=======
+>>>>>>> 0e054c1 (feat(gameover): add game over animation)
 	 * @param screen
 	 *            Screen to draw on.
 	 * @param text
@@ -922,8 +931,11 @@ public final class DrawManager {
 
 	/**
 	 * Covers the screen with a translucent black layer, used to fade out.
+<<<<<<< HEAD
 	 * AUTHORED BY: VFX TEAM (Effection)
 	 * Any further inquiries please contact us.
+=======
+>>>>>>> 0e054c1 (feat(gameover): add game over animation)
 	 *
 	 * @param screen
 	 *            Screen to draw on.
