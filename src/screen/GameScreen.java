@@ -9,6 +9,7 @@ import engine.Core;
 import engine.GameSettings;
 import engine.GameState;
 import engine.Achievement;
+import engine.DamageDimEffect;
 import entity.Bullet;
 import entity.BulletPool;
 import entity.EnemyShip;
@@ -77,6 +78,8 @@ public class GameScreen extends Screen {
 	private boolean levelFinished;
 	/** Checks if a bonus life is received. */
 	private boolean bonusLife;
+	/** Dims the screen when the player is hit. */
+	private DamageDimEffect damageDim; 
 
 	/**
 	 * Constructor, establishes the properties of the screen.
@@ -129,6 +132,8 @@ public class GameScreen extends Screen {
 		this.achievementPopupCooldown = Core.getCooldown(
 				ACHIEVEMENT_POPUP_INTERVAL);
 		this.bullets = new HashSet<Bullet>();
+		this.damageDim = new DamageDimEffect(800, 0.5f,
+        new java.awt.Color(150, 0, 0));  //new update dim effect
 
 		// Special input delay / countdown.
 		this.gameStartTime = System.currentTimeMillis();
@@ -237,6 +242,8 @@ public class GameScreen extends Screen {
 		for (Bullet bullet : this.bullets)
 			drawManager.drawEntity(bullet, bullet.getPositionX(),
 					bullet.getPositionY());
+		// Damage dim (under HUD, so score/lives stay bright).
+		drawManager.drawDamageDim(this, this.damageDim);   // ADD
 
 		// Interface.
 		drawManager.drawScore(this, this.score);
@@ -291,6 +298,7 @@ public class GameScreen extends Screen {
 					if (!this.ship.isDestroyed()) {
 						this.ship.destroy();
 						this.lives--;
+						this.damageDim.trigger();        // <- NEW LINE HERE
 						this.logger.info("Hit on player ship, " + this.lives
 								+ " lives remaining.");
 					}

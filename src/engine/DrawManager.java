@@ -713,4 +713,18 @@ public final class DrawManager {
 				selected ? Color.GREEN : Color.WHITE);
 		drawCenteredRegularString(screen, string, height);
 	}
+	/**
+	 * Draws the damage dim overlay when the player is hit.
+	 *
+	 * @param screen
+	 *            Screen to draw on.
+	 * @param effect
+	 *            Dim effect to draw.
+	 */
+	public void drawDamageDim(final Screen screen,
+			final DamageDimEffect effect) {
+		if (effect != null)
+			effect.draw(backBufferGraphics, screen.getWidth(),
+					screen.getHeight());
+	}
 }
