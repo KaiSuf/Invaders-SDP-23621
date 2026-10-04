@@ -116,8 +116,12 @@ public final class DrawManager {
 
 		} catch (IOException e) {
 			logger.warning("Loading failed.");
+			fontRegular = new Font(Font.MONOSPACED, Font.PLAIN, 14);
+			fontBig = new Font(Font.MONOSPACED, Font.PLAIN, 24);
 		} catch (FontFormatException e) {
 			logger.warning("Font formating failed.");
+			fontRegular = new Font(Font.MONOSPACED, Font.PLAIN, 14);
+			fontBig = new Font(Font.MONOSPACED, Font.PLAIN, 24);
 		}
 	}
 
@@ -433,6 +437,31 @@ public final class DrawManager {
 	}
 
 	/**
+	 * Draws an achievement-unlocked popup over the game.
+	 *
+	 * @param screen Screen where the popup is drawn.
+	 * @param achievement Newly unlocked achievement.
+	 */
+	public void drawAchievementUnlocked(final Screen screen,
+			final Achievement achievement) {
+		int boxWidth = screen.getWidth() / 2;
+		int boxHeight = fontRegularMetrics.getHeight() * 3;
+		int boxX = (screen.getWidth() - boxWidth) / 2;
+		int boxY = screen.getHeight() - boxHeight
+				- fontRegularMetrics.getHeight();
+
+		backBufferGraphics.setColor(Color.BLACK);
+		backBufferGraphics.fillRect(boxX, boxY, boxWidth, boxHeight);
+		backBufferGraphics.setColor(Color.GREEN);
+		backBufferGraphics.drawRect(boxX, boxY, boxWidth, boxHeight);
+		drawCenteredRegularString(screen, "Achievement unlocked!", boxY
+				+ fontRegularMetrics.getHeight() * 3 / 2);
+		backBufferGraphics.setColor(Color.WHITE);
+		drawCenteredRegularString(screen, achievement.getName(), boxY
+				+ fontRegularMetrics.getHeight() * 5 / 2);
+	}
+
+	/**
 	 * Draws the title of a screen reached from the main menu, in the same
 	 * colour and place as the high score screen's title. Sets its own colour,
 	 * so it does not depend on what was drawn before it.
@@ -678,5 +707,78 @@ public final class DrawManager {
 		else
 			drawCenteredBigString(screen, "GO!", screen.getHeight() / 2
 					+ fontBigMetrics.getHeight() / 3);
+	}
+
+	/**
+	 * Draws a centered row of text in the menu colours: green when
+	 * selected, white otherwise.
+	 *
+	 * @param screen
+	 *            Screen to draw on.
+	 * @param string
+	 *            Text to draw.
+	 * @param height
+	 *            Height of the drawing.
+	 * @param selected
+	 *            Whether the row is currently selected.
+	 */
+	public void drawMenuRow(final Screen screen, final String string,
+			final int height, final boolean selected) {
+		drawMenuRow(screen, string, height, selected, true);
+	}
+
+	/**
+	 * Draws a centered row of text in the menu colours: green when
+	 * selected, dark grey when disabled, white otherwise.
+	 *
+	 * @param screen
+	 *            Screen to draw on.
+	 * @param string
+	 *            Text to draw.
+	 * @param height
+	 *            Height of the drawing.
+	 * @param selected
+	 *            Whether the row is currently selected.
+	 * @param enabled
+	 *            Whether the row can be chosen.
+	 */
+	public void drawMenuRow(final Screen screen, final String string,
+			final int height, final boolean selected,
+			final boolean enabled) {
+		if (selected)
+			backBufferGraphics.setColor(Color.GREEN);
+		else if (!enabled)
+			backBufferGraphics.setColor(Color.DARK_GRAY);
+		else
+			backBufferGraphics.setColor(Color.WHITE);
+		drawCenteredRegularString(screen, string, height);
+	}
+	/**
+	 * Draws the damage dim overlay when the player is hit.
+	 *AUTHORED BY: VFX TEAM (Effection)
+	 *Any further inquiries please contact us.
+	 * @param screen
+	 *            Screen to draw on.
+	 * @param effect
+	 *            Dim effect to draw.
+	 */
+	public void drawDamageDim(final Screen screen,
+			final DamageDimEffect effect) {
+		if (effect != null)
+			effect.draw(backBufferGraphics, screen.getWidth(),
+					screen.getHeight());
+	}                                          // <- ADD
+
+	/**                                        // <- ADD
+	 * Draws the low-health glitch effect.
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 *Any further inquiries please contact us.
+	 * 
+	 * @param screen Screen to draw on.
+	 * @param effect Glitch effect to draw.
+	 */
+	public void drawGlitch(final Screen screen, final GlitchEffect effect) {
+		if (effect != null)
+			effect.draw(backBuffer, backBufferGraphics);
 	}
 }
