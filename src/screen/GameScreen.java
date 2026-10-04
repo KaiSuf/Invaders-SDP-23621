@@ -136,7 +136,7 @@ public class GameScreen extends Screen {
 		this.achievementPopupCooldown = Core.getCooldown(
 				ACHIEVEMENT_POPUP_INTERVAL);
 		this.bullets = new HashSet<Bullet>();
-		this.damageDim = new DamageDimEffect(800, 0.5f,
+		this.damageDim = new DamageDimEffect(900, 0.75f,
         new java.awt.Color(150, 0, 0));  //new update dim effect
 		this.glitch = new GlitchEffect();
 
@@ -308,7 +308,7 @@ public class GameScreen extends Screen {
 					if (!this.ship.isDestroyed()) {
 						this.ship.destroy();
 						this.lives--;
-						this.damageDim.trigger(); // <-*AUTHORED BY: VFX TEAM (Effection)
+						this.damageDim.trigger(this.lives <= 1 ? 1f : 0.35f); // <-*AUTHORED BY: VFX TEAM (Effection)
 						this.logger.info("Hit on player ship, " + this.lives
 								+ " lives remaining.");
 					}
