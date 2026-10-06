@@ -33,6 +33,9 @@ public class DamageDimEffect implements GameEvents.Listener {
     /** True while the effect is visible. */
     private boolean active;
 
+    /** Strength of the dim effect. */
+    private float strength = 1.0f;
+
     /** Creates the effect with default values. */
     public DamageDimEffect() {
         this(DEFAULT_DURATION, DEFAULT_MAX_ALPHA, Color.BLACK);
@@ -53,8 +56,19 @@ public class DamageDimEffect implements GameEvents.Listener {
         this.active = false;
     }
 
-    /** Starts (or restarts) the effect. Call when the player is hit. */
+    
+   /** Starts the effect at full strength. */
     public void trigger() {
+        trigger(1f);
+    }
+
+    /**
+     * Starts the effect with a strength.
+     *
+     * @param strength 0.0 - 1.0, multiplies the start opacity.
+     */
+    public void trigger(final float strength) {
+        this.strength = Math.max(0f, Math.min(1f, strength));
         this.startTime = System.currentTimeMillis();
         this.active = true;
     }
@@ -74,7 +88,7 @@ public class DamageDimEffect implements GameEvents.Listener {
     @Override
     public void onEvent(final GameEvents.Type type, final int livesLeft) {
         if (type == GameEvents.Type.PLAYER_HIT)
-            trigger();
+            trigger(livesLeft <= 1 ? 1f : 0.35f);
     }
 
 
@@ -105,7 +119,7 @@ public class DamageDimEffect implements GameEvents.Listener {
         if (progress < 0f) {
             progress = 0f;
         }
-        return this.maxAlpha * (1f - progress);
+        return this.maxAlpha * this.strength * (1f - progress);
     }
 
     /** @return Current opacity. */

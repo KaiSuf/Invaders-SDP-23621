@@ -202,6 +202,8 @@ public class GameScreen extends Screen {
 		this.damageDim = new DamageDimEffect(800, 0.5f,
         new java.awt.Color(150, 0, 0)); 
 		GameEvents.subscribe(GameEvents.Type.PLAYER_HIT, this.damageDim);
+		this.damageDim = new DamageDimEffect(900, 0.75f,
+        new java.awt.Color(150, 0, 0));  //new update dim effect
 		this.glitch = new GlitchEffect();
 		this.coins = new HashSet<Coin>();
 		this.coinDropManager = new CoinDropManager();
