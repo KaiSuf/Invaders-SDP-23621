@@ -232,6 +232,16 @@ public class GameScreen extends Screen {
 			this.ship.update();
 			this.enemyShipFormation.update();
 			this.enemyShipFormation.shoot(this.bullets);
+			/**
+			 * AUTHORED BY: VFX TEAM (effection)
+			 *
+			 * Ship blinks when lives remain 1.
+			 */
+			this.ship.setBlinking(this.lives > 0
+					&& this.lives <= LOW_HEALTH_LIVES);
+
+			this.ship.update();
+			this.enemyShipFormation.update();
 		}
 
 		manageCollisions();
