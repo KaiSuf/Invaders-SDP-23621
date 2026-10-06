@@ -46,6 +46,7 @@ public class GameScreen extends Screen {
 	private static final int BONUS_SHIP_EXPLOSION = 500;
 	/** Time from finishing the level to screen change. */
 	private static final int SCREEN_CHANGE_INTERVAL = 1500;
+	// Game over animation timings. AUTHORED BY: VFX TEAM (Effection)
 	/** Pause after the player ship explodes, before enemies disappear. */
 	private static final int GAME_OVER_PAUSE = 500;
 	/** Time between the first enemy rows starting to shrink on game over. */
@@ -97,6 +98,7 @@ public class GameScreen extends Screen {
 	private Cooldown enemyShipSpecialExplosionCooldown;
 	/** Time from finishing the level to screen change. */
 	private Cooldown screenFinishedCooldown;
+	// Game over animation state. AUTHORED BY: VFX TEAM (Effection)
 	/** Time until the next enemy row explodes on game over. */
 	private Cooldown gameOverRowCooldown;
 	/** Current time between enemy rows starting to shrink on game over. */
@@ -281,7 +283,7 @@ public class GameScreen extends Screen {
 		updateCoins();
 		draw();
 
-		// Game over sequence, only when the player runs out of lives.
+		// Game over sequence, only when the player runs out of lives. AUTHORED BY: VFX TEAM (Effection)
 		if (this.lives == 0 && !this.levelFinished)
 			startGameOverSequence();
 		if (this.gameOverActive) {
@@ -311,6 +313,8 @@ public class GameScreen extends Screen {
 	/**
 	 * Starts the game over sequence: the player ship explodes, then after a
 	 * pause the remaining enemies shrink away row by row.
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 * Any further inquiries please contact us.
 	 */
 	private void startGameOverSequence() {
 		this.levelFinished = true;
@@ -337,6 +341,8 @@ public class GameScreen extends Screen {
 	 * Makes the next enemy row start shrinking, speeding up after each row,
 	 * shows the game over banner once no enemies are left, then ends the
 	 * screen.
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 * Any further inquiries please contact us.
 	 */
 	private void updateGameOverSequence() {
 		long now = System.currentTimeMillis();
@@ -391,6 +397,8 @@ public class GameScreen extends Screen {
 
 	/**
 	 * Draws the enemies shrinking and fading away on game over.
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 * Any further inquiries please contact us.
 	 */
 	private void drawShrinkingEnemies() {
 		long now = System.currentTimeMillis();
@@ -404,6 +412,8 @@ public class GameScreen extends Screen {
 
 	/**
 	 * Gets the time, from the banner start, when the fade to black begins.
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 * Any further inquiries please contact us.
 	 *
 	 * @return Milliseconds after the banner starts.
 	 */
@@ -416,6 +426,8 @@ public class GameScreen extends Screen {
 	/**
 	 * Draws the game over banner: typed out letter by letter, then blinking,
 	 * then the screen fades to black.
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 * Any further inquiries please contact us.
 	 */
 	private void drawGameOverSequence() {
 		long elapsed = System.currentTimeMillis() - this.gameOverBannerStart;
@@ -495,6 +507,7 @@ public class GameScreen extends Screen {
 					/ 12);
 		}
 
+		// Game over animation. AUTHORED BY: VFX TEAM (Effection)
 		if (this.shrinkingEnemies != null)
 			drawShrinkingEnemies();
 		if (this.showGameOverText)

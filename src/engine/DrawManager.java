@@ -757,6 +757,8 @@ public final class DrawManager {
 	}
 
 	/**
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 * Any further inquiries please contact us.
 	 * Draws an entity shrunk around its center and faded, used when enemies
 	 * disappear on game over.
 	 *
@@ -790,9 +792,12 @@ public final class DrawManager {
 	}
 
 	/**
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 * Any further inquiries please contact us.
 	 * Draws the game over banner shown on the game screen, typed out up to
 	 * the given number of characters. The text stays centered as a whole so
 	 * letters do not shift while typing.
+	 *
 	 *
 	 * @param screen
 	 *            Screen to draw on.
@@ -813,6 +818,8 @@ public final class DrawManager {
 
 	/**
 	 * Covers the screen with a translucent black layer, used to fade out.
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 * Any further inquiries please contact us.
 	 *
 	 * @param screen
 	 *            Screen to draw on.
