@@ -1,5 +1,8 @@
 package engine;
 
+import java.awt.AlphaComposite;
+import java.awt.Graphics2D;
+import entity.EnemyShip;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontFormatException;
@@ -16,6 +19,7 @@ import java.awt.Graphics2D;
 
 import screen.MenuItem;
 import screen.Screen;
+import entity.Coin;
 import entity.Entity;
 import entity.Ship;
 import entity.Particle;
@@ -196,12 +200,122 @@ public final class DrawManager {
 			final int positionY) {
 		boolean[][] image = spriteMap.get(entity.getSpriteType());
 
+		// Enemy ships can be see-through while flickering / fading out.
+		float alpha = 1f;
+		if (entity instanceof EnemyShip)
+			alpha = ((EnemyShip) entity).getAlpha();
+		if (alpha <= 0f)
+			return;
+		Graphics2D g2d = (Graphics2D) backBufferGraphics;
+		g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+
 		backBufferGraphics.setColor(entity.getColor());
 		for (int i = 0; i < image.length; i++)
 			for (int j = 0; j < image[i].length; j++)
 				if (image[i][j])
 					backBufferGraphics.drawRect(positionX + i * 2, positionY
 							+ j * 2, 1, 1);
+							
+		g2d.setComposite(AlphaComposite.SrcOver); // back to normal
+	}
+
+	/**
+	 * Draws a dropped coin as a filled circle (GoG - Currency System).
+	 * Coins have no entry in the shared sprite file, so they are drawn
+	 * here instead of through drawEntity().
+	 *
+	 * @param coin
+	 *            Coin to be drawn.
+	 * @param positionX
+	 *            Coordinates for the left side of the coin.
+	 * @param positionY
+	 *            Coordinates for the upper side of the coin.
+	 */
+	public void drawCoin(final Coin coin, final int positionX,
+			final int positionY) {
+		backBufferGraphics.setColor(coin.getColor());
+		backBufferGraphics.fillOval(positionX, positionY, coin.getWidth(),
+				coin.getHeight());
+	}
+
+	/**
+	 * Draws a coin balance as a small coin icon followed by the amount,
+	 * centered along the top bar of the screen (GoG - Currency System).
+	 * Used by the in-game HUD and the shop.
+	 *
+	 * @param screen
+	 *            Screen to draw on.
+	 * @param coins
+	 *            Coin balance to display.
+	 */
+	public void drawCoinBalance(final Screen screen, final int coins) {
+		drawCoinBalance(screen, coins, 25);
+	}
+
+	/**
+	 * Draws a coin balance as a small coin icon followed by the amount,
+	 * centered horizontally at the given baseline (GoG - Currency System).
+	 *
+	 * @param screen
+	 *            Screen to draw on.
+	 * @param coins
+	 *            Coin balance to display.
+	 * @param positionY
+	 *            Baseline Y coordinate of the text.
+	 */
+	public void drawCoinBalance(final Screen screen, final int coins,
+			final int positionY) {
+		final int iconSize = 14;
+		final int iconTextGap = 6;
+
+		backBufferGraphics.setFont(fontRegular);
+		String balanceString = Integer.toString(coins);
+		int totalWidth = iconSize + iconTextGap
+				+ fontRegularMetrics.stringWidth(balanceString);
+		int startX = (screen.getWidth() - totalWidth) / 2;
+
+		backBufferGraphics.setColor(Color.YELLOW);
+		backBufferGraphics.fillOval(startX, positionY - iconSize + 1,
+				iconSize, iconSize);
+		backBufferGraphics.setColor(Color.WHITE);
+		backBufferGraphics.drawString(balanceString, startX + iconSize
+				+ iconTextGap, positionY);
+	}
+
+	/**
+	 * Draws a diamond balance as a small diamond icon followed by the
+	 * amount, centered horizontally at the given baseline, so it can be
+	 * stacked with the coin balance (GoG - Currency System).
+	 *
+	 * @param screen
+	 *            Screen to draw on.
+	 * @param diamonds
+	 *            Diamond balance to display.
+	 * @param positionY
+	 *            Baseline Y coordinate of the text.
+	 */
+	public void drawDiamondBalance(final Screen screen, final int diamonds,
+			final int positionY) {
+		final int iconSize = 14;
+		final int iconTextGap = 6;
+
+		backBufferGraphics.setFont(fontRegular);
+		String balanceString = Integer.toString(diamonds);
+		int totalWidth = iconSize + iconTextGap
+				+ fontRegularMetrics.stringWidth(balanceString);
+		int startX = (screen.getWidth() - totalWidth) / 2;
+		int iconTop = positionY - iconSize + 1;
+
+		int[] xPoints = { startX + iconSize / 2, startX + iconSize,
+				startX + iconSize / 2, startX };
+		int[] yPoints = { iconTop, iconTop + iconSize / 2,
+				iconTop + iconSize, iconTop + iconSize / 2 };
+
+		backBufferGraphics.setColor(Color.CYAN);
+		backBufferGraphics.fillPolygon(xPoints, yPoints, 4);
+		backBufferGraphics.setColor(Color.WHITE);
+		backBufferGraphics.drawString(balanceString, startX + iconSize
+				+ iconTextGap, positionY);
 	}
 
 	/** AUTHORED BY: VFX TEAM (Effection) */
@@ -669,6 +783,83 @@ public final class DrawManager {
 		backBufferGraphics.setFont(fontBig);
 		backBufferGraphics.drawString(string, screen.getWidth() / 2
 				- fontBigMetrics.stringWidth(string) / 2, height);
+	}
+
+	/**
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 * Any further inquiries please contact us.
+	 * Draws an entity shrunk around its center and faded, used when enemies
+	 * disappear on game over.
+	 *
+	 * @param entity
+	 *            Entity to be drawn.
+	 * @param scale
+	 *            Size of the entity, from 0 (gone) to 1 (normal size).
+	 */
+	public void drawEntityShrunk(final Entity entity, final double scale) {
+		if (scale <= 0)
+			return;
+		boolean[][] image = spriteMap.get(entity.getSpriteType());
+		Color color = entity.getColor();
+		int alpha = (int) (255 * Math.min(1, scale));
+
+		double centerX = entity.getPositionX() + entity.getWidth() / 2.0;
+		double centerY = entity.getPositionY() + entity.getHeight() / 2.0;
+		int pixelSize = Math.max(1, (int) Math.round(2 * scale));
+
+		backBufferGraphics.setColor(new Color(color.getRed(),
+				color.getGreen(), color.getBlue(), alpha));
+		for (int i = 0; i < image.length; i++)
+			for (int j = 0; j < image[i].length; j++)
+				if (image[i][j])
+					backBufferGraphics.fillRect(
+							(int) (centerX + (i * 2 - entity.getWidth()
+									/ 2.0) * scale),
+							(int) (centerY + (j * 2 - entity.getHeight()
+									/ 2.0) * scale),
+							pixelSize, pixelSize);
+	}
+
+	/**
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 * Any further inquiries please contact us.
+	 * Draws the game over banner shown on the game screen, typed out up to
+	 * the given number of characters. The text stays centered as a whole so
+	 * letters do not shift while typing.
+	 *
+	 *
+	 * @param screen
+	 *            Screen to draw on.
+	 * @param text
+	 *            Full banner text.
+	 * @param visibleChars
+	 *            Number of characters typed so far.
+	 */
+	public void drawGameOverBanner(final Screen screen, final String text,
+			final int visibleChars) {
+		backBufferGraphics.setColor(Color.GREEN);
+		backBufferGraphics.setFont(fontBig);
+		backBufferGraphics.drawString(
+				text.substring(0, Math.min(visibleChars, text.length())),
+				screen.getWidth() / 2 - fontBigMetrics.stringWidth(text) / 2,
+				screen.getHeight() / 2);
+	}
+
+	/**
+	 * Covers the screen with a translucent black layer, used to fade out.
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 * Any further inquiries please contact us.
+	 *
+	 * @param screen
+	 *            Screen to draw on.
+	 * @param alpha
+	 *            Opacity of the layer, from 0 (clear) to 255 (black).
+	 */
+	public void drawFadeOverlay(final Screen screen, final int alpha) {
+		backBufferGraphics.setColor(new Color(0, 0, 0,
+				Math.max(0, Math.min(255, alpha))));
+		backBufferGraphics.fillRect(0, 0, screen.getWidth(),
+				screen.getHeight());
 	}
 
 	/**
