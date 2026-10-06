@@ -3,6 +3,9 @@ package screen;
 import java.awt.event.KeyEvent;
 import java.util.HashSet;
 import java.util.Set;
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
 
 import engine.Cooldown;
 import engine.Core;
@@ -17,6 +20,7 @@ import entity.EnemyShip;
 import entity.EnemyShipFormation;
 import entity.Entity;
 import entity.Ship;
+import entity.Particle;
 
 /**
  * Implements the game screen, where the action happens.
@@ -80,6 +84,11 @@ public class GameScreen extends Screen {
 	private boolean levelFinished;
 	/** Checks if a bonus life is received. */
 	private boolean bonusLife;
+	/** Sparkles from destroyed ships. */
+	private List<Particle> particles = new ArrayList<Particle>(); // <-*AUTHORED BY: VFX TEAM (Effection)
+	/** Colors the sparkles can have. */
+	private static final Color[] SPARKLE_COLORS = { Color.WHITE,
+        Color.YELLOW, Color.ORANGE, Color.CYAN }; // <-*AUTHORED BY: VFX TEAM (Effection)
 	/** Dims the screen when the player is hit. */
 	private DamageDimEffect damageDim; 
 	/** Glitch effect for low health. */
@@ -216,6 +225,7 @@ public class GameScreen extends Screen {
 
 		manageCollisions();
 		cleanBullets();
+		updateParticles(); // <-*AUTHORED BY: VFX TEAM (Effection)
 		draw();
 
 		if ((this.enemyShipFormation.isEmpty() || this.lives == 0)
@@ -247,6 +257,11 @@ public class GameScreen extends Screen {
 		for (Bullet bullet : this.bullets)
 			drawManager.drawEntity(bullet, bullet.getPositionX(),
 					bullet.getPositionY());
+		
+		/** AUTHORED BY: VFX TEAM (Effection) */
+		for (Particle particle : this.particles)
+			drawManager.drawParticle(particle);
+
 		// Damage dim (under HUD, so score/lives stay bright). AUTHORED BY: VFX TEAM (Effection)
 		drawManager.drawDamageDim(this, this.damageDim);   // ADD
 
@@ -279,6 +294,27 @@ public class GameScreen extends Screen {
 		}
 
 		drawManager.completeDrawing(this);
+	}
+
+	/** AUTHORED BY: VFX TEAM (Effection) */
+	/** Any further inquiries please contact us */
+	/** Scatters sparkles from the center of a destroyed ship. */
+	private void spawnSparkles(final EnemyShip ship) {
+		float centerX = ship.getPositionX() + ship.getWidth() / 2f;
+		float centerY = ship.getPositionY() + ship.getHeight() / 2f;
+		for (int i = 0; i < 14; i++) {
+			Color color = SPARKLE_COLORS[(int) (Math.random() //
+                * SPARKLE_COLORS.length)];
+			this.particles.add(new Particle(centerX, centerY, color));
+		}
+	}
+	/** AUTHORED BY: VFX TEAM (Effection) */
+	/** Any further inquiries please contact us */
+	/** Moves the sparkles and removes the ones that faded away. */
+	private void updateParticles() {
+		for (Particle particle : this.particles)
+			particle.update();
+		this.particles.removeIf(Particle::isDead);
 	}
 
 	/**
@@ -320,6 +356,7 @@ public class GameScreen extends Screen {
 						this.score += enemyShip.getPointValue();
 						this.shipsDestroyed++;
 						this.enemyShipFormation.destroy(enemyShip);
+						spawnSparkles(enemyShip); // <-*AUTHORED BY: VFX TEAM (Effection)
 						showUnlockedAchievement(Core.getAchievementManager()
 								.recordEnemyDefeated());
 						recyclable.add(bullet);
@@ -330,6 +367,7 @@ public class GameScreen extends Screen {
 					this.score += this.enemyShipSpecial.getPointValue();
 					this.shipsDestroyed++;
 					this.enemyShipSpecial.destroy();
+					spawnSparkles(this.enemyShipSpecial); // <-*AUTHORED BY: VFX TEAM (Effection)
 					showUnlockedAchievement(Core.getAchievementManager()
 							.recordEnemyDefeated());
 					this.enemyShipSpecialExplosionCooldown.reset();

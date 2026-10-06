@@ -11,11 +11,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+import java.awt.AlphaComposite;
+import java.awt.Graphics2D;
 
 import screen.MenuItem;
 import screen.Screen;
 import entity.Entity;
 import entity.Ship;
+import entity.Particle;
 
 /**
  * Manages screen drawing.
@@ -200,6 +203,18 @@ public final class DrawManager {
 					backBufferGraphics.drawRect(positionX + i * 2, positionY
 							+ j * 2, 1, 1);
 	}
+
+	/** AUTHORED BY: VFX TEAM (Effection) */
+	/** Draws a sparkle, see-through according to its age. */
+	public void drawParticle(final Particle particle) {
+		Graphics2D g2d = (Graphics2D) backBufferGraphics;
+		g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER,
+            particle.getAlpha()));
+		g2d.setColor(particle.getColor());
+		g2d.fillRect(particle.getX(), particle.getY(), particle.getSize(),
+            particle.getSize());
+		g2d.setComposite(AlphaComposite.SrcOver);
+}
 
 	/**
 	 * For debugging purpouses, draws the canvas borders.
