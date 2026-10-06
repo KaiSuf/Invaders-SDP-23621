@@ -239,10 +239,10 @@ public class GameScreen extends Screen {
 		updateCoins();
 		draw();
 
-		if ((this.enemyShipFormation.isEmpty() || this.lives == 0)
-				&& !this.levelFinished) {
-			this.levelFinished = true;
-			this.screenFinishedCooldown.reset();
+		if ((this.enemyShipFormation.isEmpty() || this.lives == 0) && !this.levelFinished) {
+    		this.levelFinished = true;
+    		this.damageDim.reset();
+    		this.screenFinishedCooldown.reset();
 
 			// Level cleared alive: level N is worth N diamonds, kept pending
 			// until cashed out (see engine.DiamondManager), and coins still
