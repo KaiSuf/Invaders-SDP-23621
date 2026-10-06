@@ -4,8 +4,10 @@ import java.awt.event.KeyEvent;
 import java.util.HashSet;
 import java.util.Set;
 
+import engine.CoinDropManager;
 import engine.Cooldown;
 import engine.Core;
+import engine.CurrencyManager;
 import engine.GameSettings;
 import engine.GameState;
 import engine.Achievement;
@@ -13,6 +15,8 @@ import engine.DamageDimEffect;
 import engine.GlitchEffect;
 import entity.Bullet;
 import entity.BulletPool;
+import entity.Coin;
+import entity.CoinPool;
 import entity.EnemyShip;
 import entity.EnemyShipFormation;
 import entity.Entity;
@@ -44,6 +48,11 @@ public class GameScreen extends Screen {
 	private static final int SEPARATION_LINE_HEIGHT = 40;
 	/** Lives at or below this value start the glitch. */
 	private static final int LOW_HEALTH_LIVES = 1;
+	/** Coins awarded when a regular enemy's drop chance succeeds. */
+	private static final int COIN_VALUE = 1;
+	/** Coins guaranteed when the special bonus ship is destroyed. */
+	private static final int BONUS_COIN_VALUE = 5;
+
 	/** Current game difficulty settings. */
 	private GameSettings gameSettings;
 	/** Current difficulty level number. */
@@ -66,6 +75,11 @@ public class GameScreen extends Screen {
 	private Achievement unlockedAchievement;
 	/** Set of all bullets fired by on screen ships. */
 	private Set<Bullet> bullets;
+	/** Set of coins currently dropped and falling on screen. */
+	private Set<Coin> coins;
+	/** Decides, with a low configurable chance, whether a kill drops a
+	 * coin, so currency income doesn't scale 1:1 with kills. */
+	private CoinDropManager coinDropManager;
 	/** Current score. */
 	private int score;
 	/** Player lives left. */
@@ -84,6 +98,9 @@ public class GameScreen extends Screen {
 	private DamageDimEffect damageDim; 
 	/** Glitch effect for low health. */
 	private GlitchEffect glitch;
+	/** Diamonds earned this run but not yet cashed out; lost on death,
+	 * banked into DiamondManager only when the player cashes out. */
+	private int pendingDiamonds;
 
 	/**
 	 * Constructor, establishes the properties of the screen.
@@ -115,6 +132,7 @@ public class GameScreen extends Screen {
 			this.lives++;
 		this.bulletsShot = gameState.getBulletsShot();
 		this.shipsDestroyed = gameState.getShipsDestroyed();
+		this.pendingDiamonds = gameState.getPendingDiamonds();
 	}
 
 	/**
@@ -139,6 +157,8 @@ public class GameScreen extends Screen {
 		this.damageDim = new DamageDimEffect(800, 0.5f,
         new java.awt.Color(150, 0, 0));  //new update dim effect
 		this.glitch = new GlitchEffect();
+		this.coins = new HashSet<Coin>();
+		this.coinDropManager = new CoinDropManager();
 
 		// Special input delay / countdown.
 		this.gameStartTime = System.currentTimeMillis();
@@ -216,12 +236,21 @@ public class GameScreen extends Screen {
 
 		manageCollisions();
 		cleanBullets();
+		updateCoins();
 		draw();
 
 		if ((this.enemyShipFormation.isEmpty() || this.lives == 0)
 				&& !this.levelFinished) {
 			this.levelFinished = true;
 			this.screenFinishedCooldown.reset();
+
+			// Level cleared alive: level N is worth N diamonds, kept pending
+			// until cashed out (see engine.DiamondManager), and coins still
+			// falling are collected so the last kills' drops aren't lost.
+			if (this.enemyShipFormation.isEmpty() && this.lives > 0) {
+				this.pendingDiamonds += this.level;
+				collectRemainingCoins();
+			}
 		}
 
 		if (this.levelFinished && this.screenFinishedCooldown.checkFinished())
@@ -250,9 +279,15 @@ public class GameScreen extends Screen {
 		// Damage dim (under HUD, so score/lives stay bright). AUTHORED BY: VFX TEAM (Effection)
 		drawManager.drawDamageDim(this, this.damageDim);   // ADD
 
+		for (Coin coin : this.coins)
+			drawManager.drawCoin(coin, coin.getPositionX(),
+					coin.getPositionY());
+
 		// Interface.
 		drawManager.drawScore(this, this.score);
 		drawManager.drawLives(this, this.lives);
+		drawManager.drawCoinBalance(this, CurrencyManager.getInstance()
+				.getCoins());
 		drawManager.drawHorizontalLine(this, SEPARATION_LINE_HEIGHT - 1);
 		if (this.unlockedAchievement != null) {
 			drawManager.drawAchievementUnlocked(this, this.unlockedAchievement);
@@ -320,6 +355,7 @@ public class GameScreen extends Screen {
 						this.score += enemyShip.getPointValue();
 						this.shipsDestroyed++;
 						this.enemyShipFormation.destroy(enemyShip);
+						maybeDropCoin(enemyShip);
 						showUnlockedAchievement(Core.getAchievementManager()
 								.recordEnemyDefeated());
 						recyclable.add(bullet);
@@ -330,6 +366,7 @@ public class GameScreen extends Screen {
 					this.score += this.enemyShipSpecial.getPointValue();
 					this.shipsDestroyed++;
 					this.enemyShipSpecial.destroy();
+					dropCoin(this.enemyShipSpecial, BONUS_COIN_VALUE);
 					showUnlockedAchievement(Core.getAchievementManager()
 							.recordEnemyDefeated());
 					this.enemyShipSpecialExplosionCooldown.reset();
@@ -338,6 +375,75 @@ public class GameScreen extends Screen {
 			}
 		this.bullets.removeAll(recyclable);
 		BulletPool.recycle(recyclable);
+	}
+
+	/**
+	 * Rolls the coin-drop chance for a just-destroyed regular enemy and, if
+	 * it succeeds, drops a coin at its position. A coin does not drop on
+	 * every kill on purpose: see {@link CoinDropManager} for why.
+	 *
+	 * @param destroyedEnemy
+	 *            Enemy ship that was just destroyed.
+	 */
+	private void maybeDropCoin(final EnemyShip destroyedEnemy) {
+		if (this.coinDropManager.rollForDrop())
+			dropCoin(destroyedEnemy, COIN_VALUE);
+	}
+
+	/**
+	 * Drops a coin worth the given value from the center of a destroyed
+	 * enemy. Used directly for the special ship, which always pays out.
+	 *
+	 * @param destroyedEnemy
+	 *            Enemy ship that was just destroyed.
+	 * @param value
+	 *            Coins awarded when the coin is collected.
+	 */
+	private void dropCoin(final EnemyShip destroyedEnemy, final int value) {
+		this.coins.add(CoinPool.getCoin(
+				destroyedEnemy.getPositionX() + destroyedEnemy.getWidth() / 2,
+				destroyedEnemy.getPositionY() + destroyedEnemy.getHeight() / 2,
+				value));
+	}
+
+	/**
+	 * Moves falling coins, hands coins touched by the ship to the
+	 * CurrencyManager, and recycles coins that leave the screen.
+	 */
+	private void updateCoins() {
+		Set<Coin> recyclable = new HashSet<Coin>();
+		for (Coin coin : this.coins) {
+			coin.update();
+			if (this.lives > 0 && !this.ship.isDestroyed()
+					&& checkCollision(coin, this.ship)) {
+				CurrencyManager.getInstance().addCoins(coin.getValue());
+				recyclable.add(coin);
+				this.logger.info("Coin collected, balance: "
+						+ CurrencyManager.getInstance().getCoins());
+			} else if (coin.getPositionY() > this.height) {
+				recyclable.add(coin);
+			}
+		}
+		this.coins.removeAll(recyclable);
+		CoinPool.recycle(recyclable);
+	}
+
+	/**
+	 * Collects every coin still on screen at once, used when the level is
+	 * cleared so drops from the last enemies aren't lost.
+	 */
+	private void collectRemainingCoins() {
+		if (this.coins.isEmpty())
+			return;
+		int total = 0;
+		for (Coin coin : this.coins)
+			total += coin.getValue();
+		CurrencyManager.getInstance().addCoins(total);
+		this.logger.info("Level cleared, collected " + total
+				+ " remaining coins, balance: "
+				+ CurrencyManager.getInstance().getCoins());
+		CoinPool.recycle(this.coins);
+		this.coins.clear();
 	}
 
 	/**
@@ -384,6 +490,6 @@ public class GameScreen extends Screen {
 	 */
 	public final GameState getGameState() {
 		return new GameState(this.level, this.score, this.lives,
-				this.bulletsShot, this.shipsDestroyed);
+				this.bulletsShot, this.shipsDestroyed, this.pendingDiamonds);
 	}
 }
