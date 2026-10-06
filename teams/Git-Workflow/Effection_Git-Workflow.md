@@ -126,19 +126,23 @@ A PR should be opened when the task is implemented and ready for review.
 
 Before opening a PR, the developer must:
 
-1. Pull/rebase the latest `main`.
+1. Pull/rebase the latest `main` resolve the conflicts locally.
 2. Compile the project.
-3. Run the game and test the changes.
-4. Check that existing functionality is not broken.
+3. Run the game and test all the new changes.
+4. Verify that existing functionality is not broken.
 5. Clearly describe the changes and how they were tested.
 
 ### Code Review
 
-* Every functional PR must receive **at least one approval** from another team member.
-* The author cannot approve their own PR.
-* Changes to important shared files should receive a second review when necessary.
-* Reviewers should check correctness, readability, possible conflicts, and whether the task requirements are satisfied.
-* Requested changes must be completed before merging.
+* Approval Requirement: Every functional PR must receive **at least one approval** from another team member.
+* Self-approval: The author cannot approve their own PR.
+* Shared files: Changes to important shared files should receive a second review when necessary.
+* Review Criteria: Reviewers should check
+  * Correctness
+  * Readability
+  * Potential merge conflicts
+  * Fulfillment task requirements are satisfied.
+* Resolving Feedback: Requested changes must be completed before merging.
 
 ### Direct Push to `main`
 
@@ -154,7 +158,11 @@ Only urgent administrative actions, such as restoring a broken `main`, may be ha
 
 ### Strategy
 
-Our team will mainly use **Rebase and Fast-Forward** for feature, fix and docs branches.
+Our team uses two main approaches depending on the type of work:
+* Feature and Bug-Fix Branches:
+   Merged using **Rebase and Fast-Forward** to keep our code history linear and clear.
+* Documentation Branches: 
+   Merged using **Squash** to combine small text edits and typo fixes into a single clean commit.
 
 Before merging, the branch must be updated with the latest Effection main by rebasing onto it.
 After the PR is approved and all tests pass, the changes are integrated into main using a fast-forward merge.
@@ -179,8 +187,8 @@ feature/vfx-effect ── rebase ──► feature/vfx-effect
 ### Why Rebase and Fast-Forward?
 
 * Keeps the history simple and linear.
-* Makes individual changes easier to understand.
-* Reduces unnecessary merge commits.
+* Makes individual changes easier to understand in git history tools.
+* Eliminates clutter from repetitive merge commits.
 * Makes it easier to identify and revert problematic changes.
 
 ### Merge Commit
@@ -193,64 +201,95 @@ Instead, a merge commit may be used when synchronising our team repository with 
 
 If a conflict occurs:
 
-1. The branch should first be updated with the latest team main.
-2. The **branch author** should resolve the conflict because they understand their changes best.
-3. The affected code should be reviewed carefully, especially shared files.
-4. The project must be compiled and tested again after resolving the conflict.
-5. If the conflict involves another team's work, the affected members should discuss and agree on the correct solution.
+1. **Local Rebase First:** 
+      The branch author must pull the latest `main` and resolve any conflicts on their local computer before opening a Pull Request.
+2. **Consult File Owners:** 
+      If a conflict happens in a core shared file, consult the team member responsible for that file before finishing the merge.
+3. **Protect Game Assets:** 
+      For graphic files, sprite lists, and resource settings, **do not delete a teammate's changes**. Combine both versions so game visuals do not break.
+4. **Re-Test Immediately:** 
+      After resolving conflicts, always compile and launch the game locally to confirm that gameplay and visual effects still work correctly.
+5. **Ask for Help if Stuck:** 
+      If a conflict involves another team's work or cannot be resolved easily, discuss it in the team channel or consult the instructor.
 
 ---
 
 ## 6. Overall Development Workflow
 
-The complete development process is:
+The overall development workflow defines the end-to-end process of a feature, bug fix, or documentation update. To maintain a clean linear history and ensure the `main` branch remains stable and playable at all times, our team follows a structured workflow to ensure that changes are developed and integrated in a controlled manner.  Each task is developed on a separate short-lived branch, kept up to date with `main`, and tested before being submitted for review. Once approved, changes are merged into `main` using our agreed merge strategy, helping the team maintain a stable project throughout development.
+
+The diagram below illustrates the visual overview of this process:
 
 ```mermaid
 flowchart TD
-    A[Choose Task] --> B[Create Branch from main]
-    B --> C[Implement Changes]
-    C --> D[Commit Changes]
-    D --> E[Pull/Rebase Latest main]
-    E --> F[Test and Compile]
-    F --> G[Open Pull Request]
-    G --> H[Code Review]
-    H --> I{Approved?}
-    I -- No --> C
-    I -- Yes --> J[Rebase and Merge into main]
-    J --> K[Delete Branch]
-    K --> L[Main remains stable]
+    A[Create Branch] --> B[Implement Changes]
+    B --> C[Commit Changes]
+    C --> D[Pull / Rebase Latest main]
+    D --> E{Conflict?}
+    E -- Yes --> F[Resolve Conflict]
+    F --> G[Compile & Test]
+    E -- No --> G
+    G --> H[Open Pull Request]
+    H --> I[Code Review]
+    I --> J{Approved?}
+    J -- No --> B
+    J -- Yes --> K[Rebase & Merge into main]
+    K --> L[Delete Branch]
+    L --> M[Main Remains Stable]
 ```
 
 ### Step-by-Step Process
 
-1. **Choose a task**
-   Select a feature, bug fix, or documentation task.
+1. **Create a branch**
 
-2. **Create a branch**
-   Create a short-lived branch from the latest `main`.
+      Create a short-lived branch from the latest `main` branch. Use the appropriate branch naming convention such as `feature/<description>`, `fix/<description>`, or `docs/<description>`.
 
-3. **Develop**
-   Implement the task and make small, logical commits.
+2. **Implement Changes**
 
-4. **Update the branch**
-   Rebase with the latest `main` to reduce possible conflicts.
+      Develop the assigned feature, fix, or documentation change on the branch. Keep the changes focused on one task.
 
-5. **Test**
-   Compile and run the game to verify that the changes work correctly.
+3. **Commit Changes**
 
-6. **Open a Pull Request**
-   Describe the changes and provide testing information.
+      Commit completed logical changes using clear and consistent commit messages following the agreed format:
 
-7. **Code Review**
-   Another team member reviews the PR and requests changes if necessary.
+   `type(scope): short description`
 
-8. **Merge**
-   Once approved, rebase and fast-forward the branch into `main`.
+4. **Pull / Rebase Latest main**
+   
+      Before opening a Pull Request, update the branch with the latest changes from `main` using rebase to reduce possible conflicts.
 
-9. **Delete the branch**
-   Remove the completed branch to keep the repository clean.
+5. **Check for Conflict**
+   
+      If a conflict occurs during the rebase, the branch author resolves the conflict and reviews the affected code before continuing. If there is no conflict, continue to testing.
 
-10. **Continue development**
-    The next task starts from the updated `main`.
+6. **Compile & Test**
+      
+      Compile the project and run the game to verify that the changes work correctly and do not break existing functionality.
+
+7. **Open a Pull Request**
+   
+      Open a Pull Request from the working branch to `main`. The PR should describe the changes made and the testing performed.
+
+8. **Code Review**
+   
+      Another team member reviews the PR and requests changes if necessary.
+
+9. **Check Approval**
+   
+      If changes are requested, update the branch and push the changes to the PR. If the PR is approved, proceed with the merge.
+
+10. **Rebase & Merge into main**
+   
+      Once approved, integrate the branch into `main` using the agreed rebase and fast-forward merge strategy.
+
+11. **Delete Branch**
+   
+      After the changes have been successfully merged, delete the completed branch to keep the repository clean.
+
+12. **Main Remains Stable**
+   
+      Following successful branch deletion, `main` is left in a stable, production-ready state. All developers pull the latest `main` to ensure their next feature branch starts from a verified baseline.
+      
 
 ---
+
