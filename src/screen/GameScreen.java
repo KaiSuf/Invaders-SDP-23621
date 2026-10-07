@@ -8,6 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import engine.CoinDropManager;
@@ -104,6 +108,7 @@ public class GameScreen extends Screen {
 	private Cooldown enemyShipSpecialExplosionCooldown;
 	/** Time from finishing the level to screen change. */
 	private Cooldown screenFinishedCooldown;
+
 	// Game over animation state. AUTHORED BY: VFX TEAM (Effection)
 	/** Time until the next enemy row explodes on game over. */
 	private Cooldown gameOverRowCooldown;
@@ -119,6 +124,7 @@ public class GameScreen extends Screen {
 	private boolean gameOverActive;
 	/** Checks if the game over banner is shown. */
 	private boolean showGameOverText;
+	
 	/** Time until the achievement unlock popup closes. */
 	private Cooldown achievementPopupCooldown;
 	/** Achievement currently shown in the unlock popup. */
@@ -532,6 +538,12 @@ public class GameScreen extends Screen {
 					System.currentTimeMillis() - this.achievementPopupStartedAt,
 					ACHIEVEMENT_POPUP_INTERVAL, ACHIEVEMENT_POPUP_SLIDE_IN,
 					ACHIEVEMENT_POPUP_SLIDE_OUT);
+					
+		// Game over animation. AUTHORED BY: VFX TEAM (Effection)
+		if (this.shrinkingEnemies != null)
+			drawShrinkingEnemies();
+		if (this.showGameOverText)
+			drawGameOverSequence();
 
 		drawManager.completeDrawing(this);
 	}
