@@ -186,7 +186,7 @@ public final class DrawManager {
 				frame.getInsets().top, frame);
 	}
 
-	/**
+		/**
 	 * Draws an entity, using the apropiate image.
 	 * 
 	 * @param entity
@@ -198,21 +198,23 @@ public final class DrawManager {
 	 */
 	public void drawEntity(final Entity entity, final int positionX,
 			final int positionY) {
-		drawSprite(entity.getSpriteType(), positionX, positionY,
-				entity.getColor());
-    
-    // Enemy ships can be see-through while flickering / fading out.
+		// Enemy ships can be see-through while flickering / fading out.
 		float alpha = 1f;
 		if (entity instanceof EnemyShip)
 			alpha = ((EnemyShip) entity).getAlpha();
 		if (alpha <= 0f)
 			return;
-		Graphics2D g2d = (Graphics2D) backBufferGraphics;
-		g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 
-		backBufferGraphics.setColor(entity.getColor());
-  }
-		
+		Graphics2D g2d = (Graphics2D) backBufferGraphics;
+		g2d.setComposite(AlphaComposite.getInstance(
+				AlphaComposite.SRC_OVER, alpha));
+
+		drawSprite(entity.getSpriteType(), positionX, positionY,
+				entity.getColor());
+
+		g2d.setComposite(AlphaComposite.SrcOver); // back to normal
+	}
+
 	/**
 	 * Draws a sprite using the game's standard two-pixel scale.
 	 *
@@ -226,15 +228,14 @@ public final class DrawManager {
 		boolean[][] image = spriteMap.get(spriteType);
 
 		backBufferGraphics.setColor(color);
-  
+
 		for (int i = 0; i < image.length; i++)
 			for (int j = 0; j < image[i].length; j++)
 				if (image[i][j])
-					backBufferGraphics.drawRect(positionX + i * 2, positionY
-							+ j * 2, 1, 1);
-							
-		g2d.setComposite(AlphaComposite.SrcOver); // back to normal
+					backBufferGraphics.drawRect(positionX + i * 2,
+							positionY + j * 2, 1, 1);
 	}
+
 
 	/**
 	 * Draws regular text at an exact position, left aligned.
