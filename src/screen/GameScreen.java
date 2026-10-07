@@ -228,7 +228,7 @@ public class GameScreen extends Screen {
 		this.glitch = new GlitchEffect();
 		this.screenShake = new ScreenShake();
 		this.lowHealthTimer = Core.getCooldown(LOW_HEALTH_EFFECT_DURATION);
-		this.prevLives = -1;
+		this.prevLives = this.lives;  
 		this.lowHealthActive = false;
 		this.coins = new HashSet<Coin>();
 		this.achievementPopupQueue = new LinkedList<Achievement>();
