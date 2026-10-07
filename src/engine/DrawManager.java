@@ -222,14 +222,7 @@ public final class DrawManager {
 		g2d.setComposite(AlphaComposite.SrcOver); // back to normal
 	}
 
-	/**
-	 * Draws a sprite using the game's standard two-pixel scale.
-	 *
-	 * @param spriteType Sprite to draw.
-	 * @param positionX Coordinates for the left side of the image.
-	 * @param positionY Coordinates for the upper side of the image.
-	 * @param color Color used for filled pixels.
-	 */
+	/** Draws a sprite using the game's standard two-pixel scale. */
 	public void drawSprite(final SpriteType spriteType, final int positionX,
 			final int positionY, final Color color) {
 		boolean[][] image = spriteMap.get(spriteType);
@@ -238,10 +231,9 @@ public final class DrawManager {
 		for (int i = 0; i < image.length; i++)
 			for (int j = 0; j < image[i].length; j++)
 				if (image[i][j])
-					backBufferGraphics.drawRect(positionX + i * 2, positionY
-							+ j * 2, 1, 1);
+					backBufferGraphics.drawRect(positionX + i * 2,
+							positionY + j * 2, 1, 1);
 	}
-
 	/**
 	 * Draws regular text at an exact position, left aligned.
 	 *
@@ -863,6 +855,7 @@ public final class DrawManager {
 	/**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	 * AUTHORED BY: VFX TEAM (Effection)
 	 * Any further inquiries please contact us.
 =======
@@ -871,6 +864,10 @@ public final class DrawManager {
 	 * AUTHORED BY: VFX TEAM (Effection)
 	 * Any further inquiries please contact us.
 >>>>>>> 7f72520 (docs(gameover): add VFX team authorship comments)
+=======
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 * Any further inquiries please contact us.
+>>>>>>> f19abca (fix(main): recovered latest main until dian's PR merge)
 	 * Draws an entity shrunk around its center and faded, used when enemies
 	 * disappear on game over.
 	 *
@@ -906,6 +903,7 @@ public final class DrawManager {
 	/**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	 * AUTHORED BY: VFX TEAM (Effection)
 	 * Any further inquiries please contact us.
 =======
@@ -914,18 +912,26 @@ public final class DrawManager {
 	 * AUTHORED BY: VFX TEAM (Effection)
 	 * Any further inquiries please contact us.
 >>>>>>> 7f72520 (docs(gameover): add VFX team authorship comments)
+=======
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 * Any further inquiries please contact us.
+>>>>>>> f19abca (fix(main): recovered latest main until dian's PR merge)
 	 * Draws the game over banner shown on the game screen, typed out up to
 	 * the given number of characters. The text stays centered as a whole so
 	 * letters do not shift while typing.
 	 *
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	 *
 =======
 >>>>>>> 0e054c1 (feat(gameover): add game over animation)
 =======
 	 *
 >>>>>>> 7f72520 (docs(gameover): add VFX team authorship comments)
+=======
+	 *
+>>>>>>> f19abca (fix(main): recovered latest main until dian's PR merge)
 	 * @param screen
 	 *            Screen to draw on.
 	 * @param text
@@ -947,6 +953,7 @@ public final class DrawManager {
 	 * Covers the screen with a translucent black layer, used to fade out.
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	 * AUTHORED BY: VFX TEAM (Effection)
 	 * Any further inquiries please contact us.
 =======
@@ -955,6 +962,10 @@ public final class DrawManager {
 	 * AUTHORED BY: VFX TEAM (Effection)
 	 * Any further inquiries please contact us.
 >>>>>>> 7f72520 (docs(gameover): add VFX team authorship comments)
+=======
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 * Any further inquiries please contact us.
+>>>>>>> f19abca (fix(main): recovered latest main until dian's PR merge)
 	 *
 	 * @param screen
 	 *            Screen to draw on.

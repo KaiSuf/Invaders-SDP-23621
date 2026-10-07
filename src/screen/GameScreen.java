@@ -8,6 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import engine.CoinDropManager;
@@ -531,6 +535,12 @@ public class GameScreen extends Screen {
 					System.currentTimeMillis() - this.achievementPopupStartedAt,
 					ACHIEVEMENT_POPUP_INTERVAL, ACHIEVEMENT_POPUP_SLIDE_IN,
 					ACHIEVEMENT_POPUP_SLIDE_OUT);
+					
+		// Game over animation. AUTHORED BY: VFX TEAM (Effection)
+		if (this.shrinkingEnemies != null)
+			drawShrinkingEnemies();
+		if (this.showGameOverText)
+			drawGameOverSequence();
 
 		drawManager.completeDrawing(this);
 	}
