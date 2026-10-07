@@ -210,7 +210,7 @@ public class GameScreen extends Screen {
         new java.awt.Color(150, 0, 0));  //new update dim effect
 		this.glitch = new GlitchEffect();
 		this.lowHealthTimer = Core.getCooldown(LOW_HEALTH_EFFECT_DURATION);
-		this.prevLives = -1;
+		this.prevLives = this.lives;  
 		this.lowHealthActive = false;
 		this.coins = new HashSet<Coin>();
 		this.coinDropManager = new CoinDropManager();
