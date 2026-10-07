@@ -22,6 +22,7 @@ import engine.GameSettings;
 import engine.GameState;
 import engine.Achievement;
 import engine.DamageDimEffect;
+import engine.GameEvents;
 import engine.GlitchEffect;
 import engine.ScreenShake;
 import entity.Bullet;
@@ -223,6 +224,9 @@ public class GameScreen extends Screen {
 				.getCooldown(BONUS_SHIP_EXPLOSION);
 		this.screenFinishedCooldown = Core.getCooldown(SCREEN_CHANGE_INTERVAL);
 		this.bullets = new HashSet<Bullet>();
+		this.damageDim = new DamageDimEffect(800, 0.5f,
+        new java.awt.Color(150, 0, 0)); 
+		GameEvents.subscribe(GameEvents.Type.PLAYER_HIT, this.damageDim);
 		this.damageDim = new DamageDimEffect(900, 0.75f,
 				new java.awt.Color(150, 0, 0));  //new update dim effect
 		this.glitch = new GlitchEffect();
@@ -256,6 +260,7 @@ public class GameScreen extends Screen {
 	 */
 	public final int run() {
 		super.run();
+		GameEvents.unsubscribe(GameEvents.Type.PLAYER_HIT, this.damageDim);
 
 		this.score += LIFE_SCORE * (this.lives - 1);
 		this.logger.info("Screen cleared with a score of " + this.score);
@@ -610,7 +615,7 @@ public class GameScreen extends Screen {
 					if (!this.ship.isDestroyed()) {
 						this.ship.destroy();
 						this.lives--;
-						this.damageDim.trigger(this.lives <= 1 ? 1f : 0.35f); // <-*AUTHORED BY: VFX TEAM (Effection)
+						GameEvents.emit(GameEvents.Type.PLAYER_HIT, this.lives); 
 						this.logger.info("Hit on player ship, " + this.lives
 								+ " lives remaining.");
 					}
