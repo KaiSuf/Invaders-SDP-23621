@@ -23,6 +23,7 @@ import engine.GameState;
 import engine.Achievement;
 import engine.DamageDimEffect;
 import engine.GlitchEffect;
+import engine.PointsEffect;
 import entity.Bullet;
 import entity.BulletPool;
 import entity.Coin;
@@ -158,6 +159,8 @@ public class GameScreen extends Screen {
 	private DamageDimEffect damageDim;
 	/** Glitch effect for low health. */
 	private GlitchEffect glitch;
+	/** Points shown when enemies are destroyed. AUTHORED BY: VFX TEAM (Effection) */
+	private PointsEffect pointsEffect;
 	/** Diamonds earned this run but not yet cashed out; lost on death,
 	 * banked into DiamondManager only when the player cashes out. */
 	private int pendingDiamonds;
@@ -215,6 +218,7 @@ public class GameScreen extends Screen {
 		this.damageDim = new DamageDimEffect(900, 0.75f,
         new java.awt.Color(150, 0, 0));  //new update dim effect
 		this.glitch = new GlitchEffect();
+		this.pointsEffect = new PointsEffect(SEPARATION_LINE_HEIGHT);
 		this.coins = new HashSet<Coin>();
 		this.achievementPopupQueue = new LinkedList<Achievement>();
 		this.coinDropManager = new CoinDropManager();
@@ -503,6 +507,9 @@ public class GameScreen extends Screen {
 			drawManager.drawCoin(coin, coin.getPositionX(),
 					coin.getPositionY());
 
+		// Points popups (above the dim, under the HUD). AUTHORED BY: VFX TEAM (Effection)
+		drawManager.drawPointsEffect(this, this.pointsEffect);
+
 		// Interface.
 		drawManager.drawScore(this, this.score);
 		drawManager.drawLives(this, this.lives);
@@ -587,6 +594,10 @@ public class GameScreen extends Screen {
 						this.score += enemyShip.getPointValue();
 						this.shipsDestroyed++;
 						this.enemyShipFormation.destroy(enemyShip);
+						// Points popup. AUTHORED BY: VFX TEAM (Effection)
+						this.pointsEffect.spawn(enemyShip.getPositionX() + enemyShip.getWidth() / 2,
+								enemyShip.getPositionY() + enemyShip.getHeight() / 2,
+								enemyShip.getPointValue());
 						maybeDropCoin(enemyShip);
 						showUnlockedAchievement(Core.getAchievementManager()
 								.recordEnemyDefeated());
@@ -598,6 +609,11 @@ public class GameScreen extends Screen {
 					this.score += this.enemyShipSpecial.getPointValue();
 					this.shipsDestroyed++;
 					this.enemyShipSpecial.destroy();
+					// Bonus points popup. AUTHORED BY: VFX TEAM (Effection)
+					this.pointsEffect.spawnBonus(
+						this.enemyShipSpecial.getPositionX() + this.enemyShipSpecial.getWidth() / 2,
+						this.enemyShipSpecial.getPositionY() + this.enemyShipSpecial.getHeight() / 2,
+						this.enemyShipSpecial.getPointValue());
 					dropCoin(this.enemyShipSpecial, BONUS_COIN_VALUE);
 					showUnlockedAchievement(Core.getAchievementManager()
 							.recordEnemyDefeated());
