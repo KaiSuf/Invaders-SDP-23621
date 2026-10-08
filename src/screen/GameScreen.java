@@ -328,8 +328,7 @@ public class GameScreen extends Screen {
 			updateLowHealthEffect();
 			this.ship.setBlinking(this.lowHealthActive);
 
-			this.ship.update();
-			this.enemyShipFormation.update();
+			
 		}
 
 		manageCollisions();
@@ -338,30 +337,32 @@ public class GameScreen extends Screen {
 		updateAchievementPopup();
 		draw();
 
-		// Game over sequence, only when the player runs out of lives. AUTHORED BY: VFX TEAM (Effection)
-		if (this.lives == 0 && !this.levelFinished)
-			startGameOverSequence();
-		if (this.gameOverActive) {
-			updateGameOverSequence();
-			return;
-		}
+		// Game over sequence, only when the player runs out of lives.
+// AUTHORED BY: VFX TEAM (Effection)
+if (this.lives == 0 && !this.levelFinished)
+        startGameOverSequence();
 
-		if ((this.enemyShipFormation.isEmpty() || this.lives == 0)
-				&& !this.levelFinished) {
-			this.levelFinished = true;
-			this.screenFinishedCooldown.reset();
+if (this.gameOverActive) {
+        updateGameOverSequence();
+        return;
+}
 
-			// Level cleared alive: level N is worth N diamonds, kept pending
-			// until cashed out (see engine.DiamondManager), and coins still
-			// falling are collected so the last kills' drops aren't lost.
-			if (this.enemyShipFormation.isEmpty() && this.lives > 0) {
-				this.pendingDiamonds += this.level;
-				collectRemainingCoins();
-			}
-		}
+if ((this.enemyShipFormation.isEmpty() || this.lives == 0)
+                && !this.levelFinished) {
+        this.levelFinished = true;
+        this.damageDim.reset();
+        this.screenFinishedCooldown.reset();
 
-		if (this.levelFinished && this.screenFinishedCooldown.checkFinished())
-			this.isRunning = false;
+        // Level cleared alive: level N is worth N diamonds, kept pending
+        // until cashed out, and coins still falling are collected.
+        if (this.enemyShipFormation.isEmpty() && this.lives > 0) {
+                this.pendingDiamonds += this.level;
+                collectRemainingCoins();
+        }
+}
+
+if (this.levelFinished && this.screenFinishedCooldown.checkFinished())
+        this.isRunning = false;
 
 	}
 
@@ -373,6 +374,7 @@ public class GameScreen extends Screen {
 	 */
 	private void startGameOverSequence() {
 		this.levelFinished = true;
+		this.damageDim.reset();
 		this.gameOverActive = true;
 
 		// Shows the player ship explosion; it stays since the ship is no
