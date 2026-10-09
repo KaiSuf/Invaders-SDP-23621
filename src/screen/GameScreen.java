@@ -525,7 +525,7 @@ public class GameScreen extends Screen {
 			drawManager.drawEntity(bullet, bullet.getPositionX(),
 					bullet.getPositionY());
 		// Damage dim (under HUD, so score/lives stay bright). AUTHORED BY: VFX TEAM (Effection)
-		drawManager.drawDamageDim(this, this.damageDim);   // ADD
+		drawManager.drawDamageDim(this, this.damageDim);
 
 		for (Coin coin : this.coins)
 			drawManager.drawCoin(coin, coin.getPositionX(),
@@ -602,8 +602,7 @@ public class GameScreen extends Screen {
 							&& !this.items.tryBlockHit()) { // Shield item (Team CS)
 						this.ship.destroy();
 						this.lives--;
-						this.damageDim.trigger(this.lives <= 1 ? 1f : 0.35f); // <-*AUTHORED BY: VFX TEAM (Effection)
-						GameEvents.emit(GameEvents.Type.PLAYER_HIT, this.lives);
+						GameEvents.emit(GameEvents.Type.PLAYER_HIT, this.lives); // AUTHORED BY: VFX TEAM (Effection)
 						this.logger.info("Hit on player ship, " + this.lives
 								+ " lives remaining.");
 					}
