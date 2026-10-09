@@ -1032,14 +1032,13 @@ public final class DrawManager {
 	 * @param effect
 	 *            Dim effect to draw.
 	 */
-	public void drawDamageDim(final Screen screen,
-			final DamageDimEffect effect) {
+	public void drawDamageDim(final Screen screen, final DamageDimEffect effect) {
 		if (effect != null)
 			effect.draw(backBufferGraphics, screen.getWidth(),
 					screen.getHeight());
-	}                                          // <- ADD
+	}                             
 
-	/**                                        // <- ADD
+	/**                                       
 	 * Draws the low-health glitch effect.
 	 * AUTHORED BY: VFX TEAM (Effection)
 	 *Any further inquiries please contact us.
