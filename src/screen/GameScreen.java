@@ -132,7 +132,7 @@ public class GameScreen extends Screen {
 	private boolean gameOverActive;
 	/** Checks if the game over banner is shown. */
 	private boolean showGameOverText;
-	
+
 	/** Time until the achievement unlock popup closes. */
 	private Cooldown achievementPopupCooldown;
 	/** Achievement currently shown in the unlock popup. */
@@ -249,7 +249,6 @@ public class GameScreen extends Screen {
 		this.inputDelay = Core.getCooldown(INPUT_DELAY);
 		this.inputDelay.reset();
 	}
-
     //*AUTHORED BY VFX TEAM-EFFECTION */
 	/** Starts 5 s effect when lives become 1. Stops on timeout or life gain. */
 	private void updateLowHealthEffect() {

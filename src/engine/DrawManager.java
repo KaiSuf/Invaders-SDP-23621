@@ -59,6 +59,11 @@ public final class DrawManager {
 	/** Big sized font properties. */
 	private static FontMetrics fontBigMetrics;
 
+		/** Font used for the highlighted menu item. */
+	private static Font fontSelected;
+	/** Highlighted menu item font properties. */
+	private static FontMetrics fontSelectedMetrics;
+
 	/** Sprite types mapped to their images. */
 	private static Map<SpriteType, boolean[][]> spriteMap;
 
@@ -123,6 +128,7 @@ public final class DrawManager {
 			// Font loading.
 			fontRegular = fileManager.loadFont(14f);
 			fontBig = fileManager.loadFont(24f);
+			fontSelected = fontRegular.deriveFont(17f);
 			logger.info("Finished loading the fonts.");
 
 		} catch (IOException e) {
@@ -179,6 +185,7 @@ public final class DrawManager {
 
 		fontRegularMetrics = backBufferGraphics.getFontMetrics(fontRegular);
 		fontBigMetrics = backBufferGraphics.getFontMetrics(fontBig);
+				fontSelectedMetrics = backBufferGraphics.getFontMetrics(fontSelected);
 
 		// drawBorders(screen);
 		// drawGrid(screen);
@@ -197,6 +204,11 @@ public final class DrawManager {
 	}
 
 	/**
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> 500dec6c4d1853be10fcaeceecaf5d4a3121333d
 	 * AUTHORED BY: VFX TEAM (Effection)
 	 *
 	 * Moves everything drawn after this call by the given offset.
@@ -215,6 +227,10 @@ public final class DrawManager {
 	}
 
 	/**
+<<<<<<< HEAD
+>>>>>>> 95af433 (feat(screen): add screen shake when an enemy is destroyed)
+=======
+>>>>>>> 500dec6c4d1853be10fcaeceecaf5d4a3121333d
 	 * Draws an entity, using the apropiate image.
 	 *
 	 * @param entity
@@ -243,14 +259,7 @@ public final class DrawManager {
 		g2d.setComposite(AlphaComposite.SrcOver); // back to normal
 	}
 
-	/**
-	 * Draws a sprite using the game's standard two-pixel scale.
-	 *
-	 * @param spriteType Sprite to draw.
-	 * @param positionX Coordinates for the left side of the image.
-	 * @param positionY Coordinates for the upper side of the image.
-	 * @param color Color used for filled pixels.
-	 */
+	/** Draws a sprite using the game's standard two-pixel scale. */
 	public void drawSprite(final SpriteType spriteType, final int positionX,
 	                       final int positionY, final Color color) {
 		boolean[][] image = spriteMap.get(spriteType);
@@ -263,7 +272,6 @@ public final class DrawManager {
 					backBufferGraphics.drawRect(positionX + i * 2,
 							positionY + j * 2, 1, 1);
 	}
-
 
 	/**
 	 * Draws regular text at an exact position, left aligned.
@@ -508,14 +516,21 @@ public final class DrawManager {
 	 */
 	public void drawMenu(final Screen screen, final MenuItem selected) {
 		for (MenuItem item : MenuItem.values()) {
-			if (item == selected)
+			int baseline = menuItemBaseline(screen, item.ordinal());
+
+			if (item == selected) {
+				String text = "> " + item.getTitle() + " <";
 				backBufferGraphics.setColor(Color.GREEN);
-			else if (!item.isEnabled())
-				backBufferGraphics.setColor(Color.DARK_GRAY);
-			else
-				backBufferGraphics.setColor(Color.WHITE);
-			drawCenteredRegularString(screen, item.getTitle(),
-					menuItemBaseline(screen, item.ordinal()));
+				backBufferGraphics.setFont(fontSelected);
+				backBufferGraphics.drawString(text, screen.getWidth() / 2
+						- fontSelectedMetrics.stringWidth(text) / 2, baseline);
+			} else {
+				if (!item.isEnabled())
+					backBufferGraphics.setColor(Color.DARK_GRAY);
+				else
+					backBufferGraphics.setColor(Color.WHITE);
+				drawCenteredRegularString(screen, item.getTitle(), baseline);
+			}
 		}
 	}
 
@@ -832,6 +847,8 @@ public final class DrawManager {
 	}
 
 	/**
+<<<<<<< HEAD
+=======
 	 * Draws high score screen title and instructions.
 	 *
 	 * @param screen
@@ -850,6 +867,7 @@ public final class DrawManager {
 	}
 
 	/**
+>>>>>>> 95af433 (feat(screen): add screen shake when an enemy is destroyed)
 	 * Draws high scores.
 	 *
 	 * @param screen
@@ -907,8 +925,21 @@ public final class DrawManager {
 	}
 
 	/**
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
 	 * AUTHORED BY: VFX TEAM (Effection)
 	 * Any further inquiries please contact us.
+=======
+>>>>>>> 0e054c1 (feat(gameover): add game over animation)
+=======
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 * Any further inquiries please contact us.
+>>>>>>> 7f72520 (docs(gameover): add VFX team authorship comments)
+=======
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 * Any further inquiries please contact us.
+>>>>>>> f19abca (fix(main): recovered latest main until dian's PR merge)
 	 * Draws an entity shrunk around its center and faded, used when enemies
 	 * disappear on game over.
 	 *
@@ -942,13 +973,37 @@ public final class DrawManager {
 	}
 
 	/**
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
 	 * AUTHORED BY: VFX TEAM (Effection)
 	 * Any further inquiries please contact us.
+=======
+>>>>>>> 0e054c1 (feat(gameover): add game over animation)
+=======
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 * Any further inquiries please contact us.
+>>>>>>> 7f72520 (docs(gameover): add VFX team authorship comments)
+=======
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 * Any further inquiries please contact us.
+>>>>>>> f19abca (fix(main): recovered latest main until dian's PR merge)
 	 * Draws the game over banner shown on the game screen, typed out up to
 	 * the given number of characters. The text stays centered as a whole so
 	 * letters do not shift while typing.
 	 *
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
 	 *
+=======
+>>>>>>> 0e054c1 (feat(gameover): add game over animation)
+=======
+	 *
+>>>>>>> 7f72520 (docs(gameover): add VFX team authorship comments)
+=======
+	 *
+>>>>>>> f19abca (fix(main): recovered latest main until dian's PR merge)
 	 * @param screen
 	 *            Screen to draw on.
 	 * @param text
@@ -967,8 +1022,21 @@ public final class DrawManager {
 
 	/**
 	 * Covers the screen with a translucent black layer, used to fade out.
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
 	 * AUTHORED BY: VFX TEAM (Effection)
 	 * Any further inquiries please contact us.
+=======
+>>>>>>> 0e054c1 (feat(gameover): add game over animation)
+=======
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 * Any further inquiries please contact us.
+>>>>>>> 7f72520 (docs(gameover): add VFX team authorship comments)
+=======
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 * Any further inquiries please contact us.
+>>>>>>> f19abca (fix(main): recovered latest main until dian's PR merge)
 	 *
 	 * @param screen
 	 *            Screen to draw on.
