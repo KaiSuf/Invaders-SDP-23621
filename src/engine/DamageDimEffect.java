@@ -38,7 +38,7 @@ public class DamageDimEffect implements GameEvents.Listener {
 
     /** Creates the effect with default values. */
     public DamageDimEffect() {
-        this(DEFAULT_DURATION, DEFAULT_MAX_ALPHA, Color.BLACK);
+        this(DEFAULT_DURATION, DEFAULT_MAX_ALPHA, Color.RED);
     }
 
     /**

@@ -253,12 +253,14 @@ public final class DrawManager {
 		boolean[][] image = spriteMap.get(spriteType);
 
 		backBufferGraphics.setColor(color);
+
 		for (int i = 0; i < image.length; i++)
 			for (int j = 0; j < image[i].length; j++)
 				if (image[i][j])
 					backBufferGraphics.drawRect(positionX + i * 2,
 							positionY + j * 2, 1, 1);
 	}
+
 	/**
 	 * Draws regular text at an exact position, left aligned.
 	 *
@@ -943,8 +945,7 @@ public final class DrawManager {
 	 * @param visibleChars
 	 *            Number of characters typed so far.
 	 */
-	public void drawGameOverBanner(final Screen screen, final String text,
-	                               final int visibleChars) {
+	public void drawGameOverBanner(final Screen screen, final String text, final int visibleChars) {
 		backBufferGraphics.setColor(Color.GREEN);
 		backBufferGraphics.setFont(fontBig);
 		backBufferGraphics.drawString(
