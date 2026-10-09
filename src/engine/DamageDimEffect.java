@@ -88,7 +88,7 @@ public class DamageDimEffect implements GameEvents.Listener {
     @Override
     public void onEvent(final GameEvents.Type type, final int livesLeft) {
         if (type == GameEvents.Type.PLAYER_HIT)
-            trigger();
+            trigger(livesLeft <= 1 ? 1f : 0.35f);
     }
 
 

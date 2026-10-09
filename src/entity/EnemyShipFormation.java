@@ -284,21 +284,8 @@ public class EnemyShipFormation implements Iterable<EnemyShip> {
 	/**
 	 * Removes destroyed ships from the formation. Used by the game over
 	 * sequence, while the formation is no longer updated.
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 	 * AUTHORED BY: VFX TEAM (Effection)
 	 * Any further inquiries please contact us.
-=======
->>>>>>> 0e054c1 (feat(gameover): add game over animation)
-=======
-	 * AUTHORED BY: VFX TEAM (Effection)
-	 * Any further inquiries please contact us.
->>>>>>> 7f72520 (docs(gameover): add VFX team authorship comments)
-=======
-	 * AUTHORED BY: VFX TEAM (Effection)
-	 * Any further inquiries please contact us.
->>>>>>> f19abca (fix(main): recovered latest main until dian's PR merge)
 	 */
 	public final void removeDestroyed() {
 		List<EnemyShip> destroyed;
@@ -319,21 +306,8 @@ public class EnemyShipFormation implements Iterable<EnemyShip> {
 	/**
 	 * Takes every remaining ship in the lowest row out of the formation, so
 	 * the game over sequence can animate them on its own.
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 	 * AUTHORED BY: VFX TEAM (Effection)
 	 * Any further inquiries please contact us.
-=======
->>>>>>> 0e054c1 (feat(gameover): add game over animation)
-=======
-	 * AUTHORED BY: VFX TEAM (Effection)
-	 * Any further inquiries please contact us.
->>>>>>> 7f72520 (docs(gameover): add VFX team authorship comments)
-=======
-	 * AUTHORED BY: VFX TEAM (Effection)
-	 * Any further inquiries please contact us.
->>>>>>> f19abca (fix(main): recovered latest main until dian's PR merge)
 	 *
 	 * @return Ships of the lowest row, empty if no ships were left.
 	 */
