@@ -528,7 +528,7 @@ public class GameScreen extends Screen {
 		// Stop shake offset before full-screen dim.
 		drawManager.setWorldOffset(0, 0);
 		// Damage dim (under HUD, so score/lives stay bright). AUTHORED BY: VFX TEAM (Effection)
-		drawManager.drawDamageDim(this, this.damageDim);   // ADD
+		drawManager.drawDamageDim(this, this.damageDim);
 
 		// Coins are part of the game world, so they shake too.
 		drawManager.setWorldOffset(this.screenShake.getOffsetX(),
