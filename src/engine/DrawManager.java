@@ -941,8 +941,7 @@ public final class DrawManager {
 	 * @param visibleChars
 	 *            Number of characters typed so far.
 	 */
-	public void drawGameOverBanner(final Screen screen, final String text,
-	                               final int visibleChars) {
+	public void drawGameOverBanner(final Screen screen, final String text, final int visibleChars) {
 		backBufferGraphics.setColor(Color.GREEN);
 		backBufferGraphics.setFont(fontBig);
 		backBufferGraphics.drawString(
