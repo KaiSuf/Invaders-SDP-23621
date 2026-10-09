@@ -202,7 +202,10 @@ public final class DrawManager {
 
 	/**
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 500dec6c4d1853be10fcaeceecaf5d4a3121333d
 	 * AUTHORED BY: VFX TEAM (Effection)
 	 *
 	 * Moves everything drawn after this call by the given offset.
@@ -221,7 +224,10 @@ public final class DrawManager {
 	}
 
 	/**
+<<<<<<< HEAD
 >>>>>>> 95af433 (feat(screen): add screen shake when an enemy is destroyed)
+=======
+>>>>>>> 500dec6c4d1853be10fcaeceecaf5d4a3121333d
 	 * Draws an entity, using the apropiate image.
 	 *
 	 * @param entity
@@ -256,12 +262,14 @@ public final class DrawManager {
 		boolean[][] image = spriteMap.get(spriteType);
 
 		backBufferGraphics.setColor(color);
+
 		for (int i = 0; i < image.length; i++)
 			for (int j = 0; j < image[i].length; j++)
 				if (image[i][j])
 					backBufferGraphics.drawRect(positionX + i * 2,
 							positionY + j * 2, 1, 1);
 	}
+
 	/**
 	 * Draws regular text at an exact position, left aligned.
 	 *
@@ -988,8 +996,7 @@ public final class DrawManager {
 	 * @param visibleChars
 	 *            Number of characters typed so far.
 	 */
-	public void drawGameOverBanner(final Screen screen, final String text,
-	                               final int visibleChars) {
+	public void drawGameOverBanner(final Screen screen, final String text, final int visibleChars) {
 		backBufferGraphics.setColor(Color.GREEN);
 		backBufferGraphics.setFont(fontBig);
 		backBufferGraphics.drawString(

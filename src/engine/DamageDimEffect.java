@@ -38,7 +38,7 @@ public class DamageDimEffect implements GameEvents.Listener {
 
     /** Creates the effect with default values. */
     public DamageDimEffect() {
-        this(DEFAULT_DURATION, DEFAULT_MAX_ALPHA, Color.BLACK);
+        this(DEFAULT_DURATION, DEFAULT_MAX_ALPHA, Color.RED);
     }
 
     /**
@@ -88,7 +88,7 @@ public class DamageDimEffect implements GameEvents.Listener {
     @Override
     public void onEvent(final GameEvents.Type type, final int livesLeft) {
         if (type == GameEvents.Type.PLAYER_HIT)
-            trigger();
+            trigger(livesLeft <= 1 ? 1f : 0.35f);
     }
 
 

@@ -224,9 +224,8 @@ public class GameScreen extends Screen {
 				.getCooldown(BONUS_SHIP_EXPLOSION);
 		this.screenFinishedCooldown = Core.getCooldown(SCREEN_CHANGE_INTERVAL);
 		this.bullets = new HashSet<Bullet>();
-		this.damageDim = new DamageDimEffect(800, 0.5f,
-        new java.awt.Color(150, 0, 0)); 
-		GameEvents.subscribe(GameEvents.Type.PLAYER_HIT, this.damageDim);
+		this.damageDim = new DamageDimEffect(900, 0.75f, new java.awt.Color(150, 0, 0)); //new update dim effect
+		GameEvents.subscribe(GameEvents.Type.PLAYER_HIT, this.damageDim); //Red damage dimming listener
 		this.glitch = new GlitchEffect();
 		this.screenShake = new ScreenShake();
 		this.lowHealthTimer = Core.getCooldown(LOW_HEALTH_EFFECT_DURATION);
@@ -266,100 +265,108 @@ public class GameScreen extends Screen {
 		return this.returnCode;
 	}
 
-	/**
-	 * Updates the elements on screen and checks for events.
-	 */
-	protected final void update() {
-		super.update();
+/**
+ * Updates the elements on screen and checks for events.
+ */
+protected final void update() {
+    super.update();
 
-		if (this.inputDelay.checkFinished() && !this.levelFinished) {
+    if (this.inputDelay.checkFinished() && !this.levelFinished) {
 
-			if (!this.ship.isDestroyed()) {
-				boolean moveRight = inputManager.isKeyDown(KeyEvent.VK_RIGHT)
-						|| inputManager.isKeyDown(KeyEvent.VK_D);
-				boolean moveLeft = inputManager.isKeyDown(KeyEvent.VK_LEFT)
-						|| inputManager.isKeyDown(KeyEvent.VK_A);
+        if (!this.ship.isDestroyed()) {
+            boolean moveRight = inputManager.isKeyDown(KeyEvent.VK_RIGHT)
+                    || inputManager.isKeyDown(KeyEvent.VK_D);
+            boolean moveLeft = inputManager.isKeyDown(KeyEvent.VK_LEFT)
+                    || inputManager.isKeyDown(KeyEvent.VK_A);
 
-				boolean isRightBorder = this.ship.getPositionX()
-						+ this.ship.getWidth() + this.ship.getSpeed() > this.width - 1;
-				boolean isLeftBorder = this.ship.getPositionX()
-						- this.ship.getSpeed() < 1;
+            boolean isRightBorder = this.ship.getPositionX()
+                    + this.ship.getWidth() + this.ship.getSpeed() > this.width - 1;
+            boolean isLeftBorder = this.ship.getPositionX()
+                    - this.ship.getSpeed() < 1;
 
-				if (moveRight && !isRightBorder) {
-					this.ship.moveRight();
-				}
-				if (moveLeft && !isLeftBorder) {
-					this.ship.moveLeft();
-				}
-				if (inputManager.isKeyDown(KeyEvent.VK_SPACE))
-					if (this.ship.shoot(this.bullets))
-						this.bulletsShot++;
-			}
+            if (moveRight && !isRightBorder) {
+                this.ship.moveRight();
+            }
+            if (moveLeft && !isLeftBorder) {
+                this.ship.moveLeft();
+            }
 
-			if (this.enemyShipSpecial != null) {
-				if (!this.enemyShipSpecial.isDestroyed())
-					this.enemyShipSpecial.move(2, 0);
-				else if (this.enemyShipSpecialExplosionCooldown.checkFinished())
-					this.enemyShipSpecial = null;
+            if (inputManager.isKeyDown(KeyEvent.VK_SPACE)) {
+                if (this.ship.shoot(this.bullets)) {
+                    this.bulletsShot++;
+                }
+            }
+        }
 
-			}
-			if (this.enemyShipSpecial == null
-					&& this.enemyShipSpecialCooldown.checkFinished()) {
-				this.enemyShipSpecial = new EnemyShip();
-				this.enemyShipSpecialCooldown.reset();
-				this.logger.info("A special ship appears");
-			}
-			if (this.enemyShipSpecial != null
-					&& this.enemyShipSpecial.getPositionX() > this.width) {
-				this.enemyShipSpecial = null;
-				this.logger.info("The special ship has escaped");
-			}
+        if (this.enemyShipSpecial != null) {
+            if (!this.enemyShipSpecial.isDestroyed()) {
+                this.enemyShipSpecial.move(2, 0);
+            } else if (this.enemyShipSpecialExplosionCooldown.checkFinished()) {
+                this.enemyShipSpecial = null;
+            }
+        }
 
-			this.ship.update();
-			this.enemyShipFormation.update();
-			this.enemyShipFormation.shoot(this.bullets);
-			/**
-			 * AUTHORED BY: VFX TEAM (effection)
-			 *
-			 * Ship blinks when lives remain 1.
-			 */
-			updateLowHealthEffect();
-			this.ship.setBlinking(this.lowHealthActive);
-		}
+        if (this.enemyShipSpecial == null
+                && this.enemyShipSpecialCooldown.checkFinished()) {
+            this.enemyShipSpecial = new EnemyShip();
+            this.enemyShipSpecialCooldown.reset();
+            this.logger.info("A special ship appears");
+        }
 
-		manageCollisions();
-		cleanBullets();
-		updateCoins();
-		updateAchievementPopup();
-		draw();
+        if (this.enemyShipSpecial != null
+                && this.enemyShipSpecial.getPositionX() > this.width) {
+            this.enemyShipSpecial = null;
+            this.logger.info("The special ship has escaped");
+        }
 
-		// Game over sequence, only when the player runs out of lives. AUTHORED BY: VFX TEAM (Effection)
-		if (this.lives == 0 && !this.levelFinished)
-			startGameOverSequence();
-		if (this.gameOverActive) {
-			updateGameOverSequence();
-			return;
-		}
+        this.ship.update();
+        this.enemyShipFormation.update();
+        this.enemyShipFormation.shoot(this.bullets);
 
-		if ((this.enemyShipFormation.isEmpty() || this.lives == 0)
-				&& !this.levelFinished) {
-			this.levelFinished = true;
-			this.screenFinishedCooldown.reset();
+        /**
+         * AUTHORED BY: VFX TEAM (effection)
+         *
+         * Ship blinks when lives remain 1.
+         */
+        updateLowHealthEffect();
+        this.ship.setBlinking(this.lowHealthActive);
+    }
 
-			// Level cleared alive: level N is worth N diamonds, kept pending
-			// until cashed out (see engine.DiamondManager), and coins still
-			// falling are collected so the last kills' drops aren't lost.
-			if (this.enemyShipFormation.isEmpty() && this.lives > 0) {
-				this.pendingDiamonds += this.level;
-				collectRemainingCoins();
-			}
-		}
+    manageCollisions();
+    cleanBullets();
+    updateCoins();
+    updateAchievementPopup();
+    draw();
 
-		if (this.levelFinished && this.screenFinishedCooldown.checkFinished())
+    // Game over sequence, only when the player runs out of lives.
+    // AUTHORED BY: VFX TEAM (Effection)
+    if (this.lives == 0 && !this.levelFinished) {
+        startGameOverSequence();
+    }
+
+    if (this.gameOverActive) {
+        updateGameOverSequence();
+        return;
+    }
+
+    if ((this.enemyShipFormation.isEmpty() || this.lives == 0)
+            && !this.levelFinished) {
+        this.levelFinished = true;
+        this.screenFinishedCooldown.reset();
+
+        // Level cleared alive: level N is worth N diamonds, kept pending
+        // until cashed out (see engine.DiamondManager), and coins still
+        // falling are collected so the last kills' drops aren't lost.
+        if (this.enemyShipFormation.isEmpty() && this.lives > 0) {
+            this.pendingDiamonds += this.level;
+            collectRemainingCoins();
+        }
+    }
+
+		if (this.levelFinished && this.screenFinishedCooldown.checkFinished()) {
 			this.isRunning = false;
-
+		}
 	}
-
 	/**
 	 * Starts the game over sequence: the player ship explodes, then after a
 	 * pause the remaining enemies shrink away row by row.
@@ -527,8 +534,9 @@ public class GameScreen extends Screen {
 					bullet.getPositionY());
 		// Stop shake offset before full-screen dim.
 		drawManager.setWorldOffset(0, 0);
+
 		// Damage dim (under HUD, so score/lives stay bright). AUTHORED BY: VFX TEAM (Effection)
-		drawManager.drawDamageDim(this, this.damageDim);   // ADD
+		drawManager.drawDamageDim(this, this.damageDim);
 
 		// Coins are part of the game world, so they shake too.
 		drawManager.setWorldOffset(this.screenShake.getOffsetX(),
@@ -610,8 +618,8 @@ public class GameScreen extends Screen {
 					if (!this.ship.isDestroyed()) {
 						this.ship.destroy();
 						this.lives--;
-						this.damageDim.trigger(this.lives <= 1 ? 1f : 0.35f); // <-*AUTHORED BY: VFX TEAM (Effection)
-						GameEvents.emit(GameEvents.Type.PLAYER_HIT, this.lives); 
+						// this.logger.info("PLAYER_HIT event emitted");
+						GameEvents.emit(GameEvents.Type.PLAYER_HIT, this.lives); // <-*AUTHORED BY: VFX TEAM (Effection)
 						this.logger.info("Hit on player ship, " + this.lives
 								+ " lives remaining.");
 					}
