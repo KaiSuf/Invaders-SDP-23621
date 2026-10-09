@@ -156,14 +156,14 @@ public class GameScreen extends Screen {
 	private DamageDimEffect damageDim;
 	/** Glitch effect for low health. */
 	private GlitchEffect glitch;
-	/** Diamonds earned this run but not yet cashed out; lost on death,
-	 * banked into DiamondManager only when the player cashes out. */
 	/** Timer for the low-life effect. */
 	private Cooldown lowHealthTimer;
 	/** Lives in the last frame. */
 	private int prevLives;
 	/** True while the low-life effect is on. */
 	private boolean lowHealthActive;	
+	/** Diamonds earned this run but not yet cashed out; lost on death,
+	 * banked into DiamondManager only when the player cashes out. */
 	private int pendingDiamonds;
 
 	/**
@@ -231,7 +231,8 @@ public class GameScreen extends Screen {
 		this.inputDelay = Core.getCooldown(INPUT_DELAY);
 		this.inputDelay.reset();
 	}
-    //*AUTHORED BY VFX TEAM-EFFECTION */
+
+	   //*AUTHORED BY VFX TEAM-EFFECTION */
 	/** Starts 5 s effect when lives become 1. Stops on timeout or life gain. */
 	private void updateLowHealthEffect() {
 		boolean lowHealth = this.lives > 0 && this.lives <= LOW_HEALTH_LIVES;
@@ -307,21 +308,15 @@ public class GameScreen extends Screen {
 			this.ship.update();
 			this.enemyShipFormation.update();
 			this.enemyShipFormation.shoot(this.bullets);
+
 			/**
 			 * AUTHORED BY: VFX TEAM (effection)
 			 *
 			 * Ship blinks when lives remain 1.
 			 */
-<<<<<<< HEAD
+			updateLowHealthEffect();
 			this.ship.setBlinking(this.lives > 0
 					&& this.lives <= LOW_HEALTH_LIVES);
-=======
-			updateLowHealthEffect();
-			this.ship.setBlinking(this.lowHealthActive);
-
-			this.ship.update();
-			this.enemyShipFormation.update();
->>>>>>> da8234f (fix(glitch) :limit the final-live effect to 5 seconds)
 		}
 
 		manageCollisions();
@@ -531,7 +526,7 @@ public class GameScreen extends Screen {
 				.getCoins());
 		drawManager.drawHorizontalLine(this, SEPARATION_LINE_HEIGHT - 1);
 		// Low-health glitch (covers game + HUD). AUTHORED BY: VFX TEAM (Effection)
-		this.glitch.setEnabled(this.lowHealthActive && !this.levelFinished);
+		this.glitch.setEnabled(this.lives > 0&& this.lives <= LOW_HEALTH_LIVES && !this.levelFinished);
 		drawManager.drawGlitch(this, this.glitch);
 		// Countdown to game start.
 		if (!this.inputDelay.checkFinished()) {
