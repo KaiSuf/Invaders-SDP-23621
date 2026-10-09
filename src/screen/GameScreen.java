@@ -1,5 +1,6 @@
 package screen;
 
+
 import java.awt.event.KeyEvent;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -18,6 +19,7 @@ import engine.GameSettings;
 import engine.GameState;
 import engine.Achievement;
 import engine.DamageDimEffect;
+import engine.GameEvents;
 import engine.GlitchEffect;
 import entity.Bullet;
 import entity.BulletPool;
@@ -215,6 +217,7 @@ public class GameScreen extends Screen {
 		this.bullets = new HashSet<Bullet>();
 		this.damageDim = new DamageDimEffect(900, 0.75f,
         new java.awt.Color(150, 0, 0));  //new update dim effect
+		GameEvents.subscribe(GameEvents.Type.PLAYER_HIT, this.damageDim);
 		this.glitch = new GlitchEffect();
 		this.coins = new HashSet<Coin>();
 		this.achievementPopupQueue = new LinkedList<Achievement>();
@@ -241,8 +244,14 @@ public class GameScreen extends Screen {
 	 * @return Next screen code.
 	 */
 	public final int run() {
-		super.run();
+		try {
+			super.run();
+		} finally {
+			GameEvents.unsubscribe(GameEvents.Type.PLAYER_HIT, this.damageDim);
+		}
+	
 		this.items.endLevel(); // Item System (Team CS)
+
 
 		this.score += LIFE_SCORE * (this.lives - 1);
 		this.logger.info("Screen cleared with a score of " + this.score);
@@ -594,6 +603,7 @@ public class GameScreen extends Screen {
 						this.ship.destroy();
 						this.lives--;
 						this.damageDim.trigger(this.lives <= 1 ? 1f : 0.35f); // <-*AUTHORED BY: VFX TEAM (Effection)
+						GameEvents.emit(GameEvents.Type.PLAYER_HIT, this.lives);
 						this.logger.info("Hit on player ship, " + this.lives
 								+ " lives remaining.");
 					}
