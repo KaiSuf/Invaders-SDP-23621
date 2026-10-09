@@ -163,7 +163,7 @@ public class GameScreen extends Screen {
 	/** True while the low-life effect is on. */
 	private boolean lowHealthActive;	
 	/** Diamonds earned this run but not yet cashed out; lost on death,
-	 * banked into DiamondManager only when the player cashes out. */
+	 * banked into DiamondManager only when the player cashes out. */	
 	private int pendingDiamonds;
 
 	/**
@@ -231,8 +231,7 @@ public class GameScreen extends Screen {
 		this.inputDelay = Core.getCooldown(INPUT_DELAY);
 		this.inputDelay.reset();
 	}
-
-	   //*AUTHORED BY VFX TEAM-EFFECTION */
+    //*AUTHORED BY VFX TEAM-EFFECTION */
 	/** Starts 5 s effect when lives become 1. Stops on timeout or life gain. */
 	private void updateLowHealthEffect() {
 		boolean lowHealth = this.lives > 0 && this.lives <= LOW_HEALTH_LIVES;
@@ -315,8 +314,7 @@ public class GameScreen extends Screen {
 			 * Ship blinks when lives remain 1.
 			 */
 			updateLowHealthEffect();
-			this.ship.setBlinking(this.lives > 0
-					&& this.lives <= LOW_HEALTH_LIVES);
+			this.ship.setBlinking(this.lowHealthActive);
 		}
 
 		manageCollisions();
