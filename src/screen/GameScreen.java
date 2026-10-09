@@ -224,8 +224,9 @@ public class GameScreen extends Screen {
 				.getCooldown(BONUS_SHIP_EXPLOSION);
 		this.screenFinishedCooldown = Core.getCooldown(SCREEN_CHANGE_INTERVAL);
 		this.bullets = new HashSet<Bullet>();
-		this.damageDim = new DamageDimEffect(900, 0.75f, new java.awt.Color(150, 0, 0)); //new update dim effect
-		GameEvents.subscribe(GameEvents.Type.PLAYER_HIT, this.damageDim); //Red damage dimming listener
+		this.damageDim = new DamageDimEffect(900, 0.75f,
+        new java.awt.Color(150, 0, 0));  //new update dim effect
+		GameEvents.subscribe(GameEvents.Type.PLAYER_HIT, this.damageDim);
 		this.glitch = new GlitchEffect();
 		this.screenShake = new ScreenShake();
 		this.lowHealthTimer = Core.getCooldown(LOW_HEALTH_EFFECT_DURATION);
@@ -618,7 +619,6 @@ protected final void update() {
 					if (!this.ship.isDestroyed()) {
 						this.ship.destroy();
 						this.lives--;
-						// this.logger.info("PLAYER_HIT event emitted");
 						GameEvents.emit(GameEvents.Type.PLAYER_HIT, this.lives); // <-*AUTHORED BY: VFX TEAM (Effection)
 						this.logger.info("Hit on player ship, " + this.lives
 								+ " lives remaining.");
