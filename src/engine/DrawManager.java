@@ -1,5 +1,8 @@
 package engine;
 
+import java.awt.AlphaComposite;
+import java.awt.Graphics2D;
+import entity.EnemyShip;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontFormatException;
@@ -190,7 +193,6 @@ public final class DrawManager {
 		graphics.drawImage(backBuffer, frame.getInsets().left,
 				frame.getInsets().top, frame);
 	}
-
 	/**
 	 * AUTHORED BY: VFX TEAM (Effection)
 	 *
@@ -229,9 +231,11 @@ public final class DrawManager {
 			return;
 
 		Graphics2D g2d = (Graphics2D) backBufferGraphics;
-		g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+		g2d.setComposite(AlphaComposite.getInstance(
+				AlphaComposite.SRC_OVER, alpha));
 
-		drawSprite(entity.getSpriteType(), positionX, positionY, entity.getColor());
+		drawSprite(entity.getSpriteType(), positionX, positionY,
+				entity.getColor());
 
 		g2d.setComposite(AlphaComposite.SrcOver); // back to normal
 	}
@@ -245,26 +249,6 @@ public final class DrawManager {
 	 * @param color Color used for filled pixels.
 	 */
 	public void drawSprite(final SpriteType spriteType, final int positionX, final int positionY, final Color color) {
-		boolean[][] image = spriteMap.get(spriteType);
-
-		backBufferGraphics.setColor(color);
-		for (int i = 0; i < image.length; i++)
-			for (int j = 0; j < image[i].length; j++)
-				if (image[i][j])
-					backBufferGraphics.drawRect(positionX + i * 2, positionY
-							+ j * 2, 1, 1);
-	}
-
-	/**
-	 * Draws a sprite using the game's standard two-pixel scale.
-	 *
-	 * @param spriteType Sprite to draw.
-	 * @param positionX Coordinates for the left side of the image.
-	 * @param positionY Coordinates for the upper side of the image.
-	 * @param color Color used for filled pixels.
-	 */
-	public void drawSprite(final SpriteType spriteType, final int positionX,
-	                       final int positionY, final Color color) {
 		boolean[][] image = spriteMap.get(spriteType);
 
 		backBufferGraphics.setColor(color);
@@ -1077,9 +1061,9 @@ public final class DrawManager {
 		if (effect != null)
 			effect.draw(backBufferGraphics, screen.getWidth(),
 					screen.getHeight());
-	}                                          // <- ADD
+	}                             
 
-	/**                                        // <- ADD
+	/**                                       
 	 * Draws the low-health glitch effect.
 	 * AUTHORED BY: VFX TEAM (Effection)
 	 *Any further inquiries please contact us.
