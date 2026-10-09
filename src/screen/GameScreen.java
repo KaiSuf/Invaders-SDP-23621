@@ -6,6 +6,12 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.awt.Color;
 import java.util.ArrayList;
@@ -19,7 +25,9 @@ import engine.GameSettings;
 import engine.GameState;
 import engine.Achievement;
 import engine.DamageDimEffect;
+import engine.GameEvents;
 import engine.GlitchEffect;
+import engine.ScreenShake;
 import entity.Bullet;
 import entity.BulletPool;
 import entity.Coin;
@@ -32,9 +40,9 @@ import entity.Particle;
 
 /**
  * Implements the game screen, where the action happens.
- * 
+ *
  * @author <a href="mailto:RobertoIA1987@gmail.com">Roberto Izquierdo Amo</a>
- * 
+ *
  */
 public class GameScreen extends Screen {
 
@@ -77,10 +85,16 @@ public class GameScreen extends Screen {
 	private static final int GAME_OVER_FADE_DURATION = 800;
 	/** How long an achievement unlock popup remains visible. */
 	private static final int ACHIEVEMENT_POPUP_INTERVAL = 3000;
+	/** Time used for the popup to slide in. */
+	private static final int ACHIEVEMENT_POPUP_SLIDE_IN = 250;
+	/** Time used for the popup to slide out. */
+	private static final int ACHIEVEMENT_POPUP_SLIDE_OUT = 350;
 	/** Height of the interface separation line. */
 	private static final int SEPARATION_LINE_HEIGHT = 40;
 	/** Lives at or below this value start the glitch. */
 	private static final int LOW_HEALTH_LIVES = 1;
+	/** Low-life effect duration (ms). */
+	private static final int LOW_HEALTH_EFFECT_DURATION = 5000;	
 	/** Coins awarded when a regular enemy's drop chance succeeds. */
 	private static final int COIN_VALUE = 1;
 	/** Coins guaranteed when the special bonus ship is destroyed. */
@@ -102,6 +116,7 @@ public class GameScreen extends Screen {
 	private Cooldown enemyShipSpecialExplosionCooldown;
 	/** Time from finishing the level to screen change. */
 	private Cooldown screenFinishedCooldown;
+
 	// Game over animation state. AUTHORED BY: VFX TEAM (Effection)
 	/** Time until the next enemy row explodes on game over. */
 	private Cooldown gameOverRowCooldown;
@@ -117,10 +132,15 @@ public class GameScreen extends Screen {
 	private boolean gameOverActive;
 	/** Checks if the game over banner is shown. */
 	private boolean showGameOverText;
+	
 	/** Time until the achievement unlock popup closes. */
 	private Cooldown achievementPopupCooldown;
 	/** Achievement currently shown in the unlock popup. */
 	private Achievement unlockedAchievement;
+	/** Achievements waiting to be shown in the unlock popup. */
+	private Queue<Achievement> achievementPopupQueue;
+	/** Time when the current achievement popup started. */
+	private long achievementPopupStartedAt;
 	/** Set of all bullets fired by on screen ships. */
 	private Set<Bullet> bullets;
 	/** Set of coins currently dropped and falling on screen. */
@@ -148,16 +168,24 @@ public class GameScreen extends Screen {
 	private static final Color[] SPARKLE_COLORS = { Color.WHITE,
         Color.YELLOW, Color.ORANGE, Color.CYAN }; // <-*AUTHORED BY: VFX TEAM (Effection)
 	/** Dims the screen when the player is hit. */
-	private DamageDimEffect damageDim; 
+	private DamageDimEffect damageDim;
 	/** Glitch effect for low health. */
 	private GlitchEffect glitch;
+	/** Screen shake when an enemy is destroyed. */
+	private ScreenShake screenShake;
 	/** Diamonds earned this run but not yet cashed out; lost on death,
 	 * banked into DiamondManager only when the player cashes out. */
+	/** Timer for the low-life effect. */
+	private Cooldown lowHealthTimer;
+	/** Lives in the last frame. */
+	private int prevLives;
+	/** True while the low-life effect is on. */
+	private boolean lowHealthActive;	
 	private int pendingDiamonds;
 
 	/**
 	 * Constructor, establishes the properties of the screen.
-	 * 
+	 *
 	 * @param gameState
 	 *            Current game state.
 	 * @param gameSettings
@@ -172,8 +200,8 @@ public class GameScreen extends Screen {
 	 *            Frames per second, frame rate at which the game is run.
 	 */
 	public GameScreen(final GameState gameState,
-			final GameSettings gameSettings, final boolean bonusLife,
-			final int width, final int height, final int fps) {
+	                  final GameSettings gameSettings, final boolean bonusLife,
+	                  final int width, final int height, final int fps) {
 		super(width, height, fps);
 
 		this.gameSettings = gameSettings;
@@ -204,13 +232,16 @@ public class GameScreen extends Screen {
 		this.enemyShipSpecialExplosionCooldown = Core
 				.getCooldown(BONUS_SHIP_EXPLOSION);
 		this.screenFinishedCooldown = Core.getCooldown(SCREEN_CHANGE_INTERVAL);
-		this.achievementPopupCooldown = Core.getCooldown(
-				ACHIEVEMENT_POPUP_INTERVAL);
 		this.bullets = new HashSet<Bullet>();
-		this.damageDim = new DamageDimEffect(900, 0.75f,
-        new java.awt.Color(150, 0, 0));  //new update dim effect
+		this.damageDim = new DamageDimEffect(900, 0.75f, new java.awt.Color(150, 0, 0)); //new update dim effect
+		GameEvents.subscribe(GameEvents.Type.PLAYER_HIT, this.damageDim); //Red damage dimming listener
 		this.glitch = new GlitchEffect();
+		this.screenShake = new ScreenShake();
+		this.lowHealthTimer = Core.getCooldown(LOW_HEALTH_EFFECT_DURATION);
+		this.prevLives = this.lives;  
+		this.lowHealthActive = false;
 		this.coins = new HashSet<Coin>();
+		this.achievementPopupQueue = new LinkedList<Achievement>();
 		this.coinDropManager = new CoinDropManager();
 
 		// Special input delay / countdown.
@@ -219,13 +250,24 @@ public class GameScreen extends Screen {
 		this.inputDelay.reset();
 	}
 
+    //*AUTHORED BY VFX TEAM-EFFECTION */
+	/** Starts 5 s effect when lives become 1. Stops on timeout or life gain. */
+	private void updateLowHealthEffect() {
+		boolean lowHealth = this.lives > 0 && this.lives <= LOW_HEALTH_LIVES;
+		if (lowHealth && this.lives != this.prevLives)
+			this.lowHealthTimer.reset();
+		this.prevLives = this.lives;
+		this.lowHealthActive = lowHealth && !this.lowHealthTimer.checkFinished();
+	}
+
 	/**
 	 * Starts the action.
-	 * 
+	 *
 	 * @return Next screen code.
 	 */
 	public final int run() {
 		super.run();
+		GameEvents.unsubscribe(GameEvents.Type.PLAYER_HIT, this.damageDim);
 
 		this.score += LIFE_SCORE * (this.lives - 1);
 		this.logger.info("Screen cleared with a score of " + this.score);
@@ -233,103 +275,113 @@ public class GameScreen extends Screen {
 		return this.returnCode;
 	}
 
-	/**
-	 * Updates the elements on screen and checks for events.
-	 */
-	protected final void update() {
-		super.update();
+/**
+ * Updates the elements on screen and checks for events.
+ */
+protected final void update() {
+    super.update();
 
-		if (this.inputDelay.checkFinished() && !this.levelFinished) {
+    if (this.inputDelay.checkFinished() && !this.levelFinished) {
 
-			if (!this.ship.isDestroyed()) {
-				boolean moveRight = inputManager.isKeyDown(KeyEvent.VK_RIGHT)
-						|| inputManager.isKeyDown(KeyEvent.VK_D);
-				boolean moveLeft = inputManager.isKeyDown(KeyEvent.VK_LEFT)
-						|| inputManager.isKeyDown(KeyEvent.VK_A);
+        if (!this.ship.isDestroyed()) {
+            boolean moveRight = inputManager.isKeyDown(KeyEvent.VK_RIGHT)
+                    || inputManager.isKeyDown(KeyEvent.VK_D);
+            boolean moveLeft = inputManager.isKeyDown(KeyEvent.VK_LEFT)
+                    || inputManager.isKeyDown(KeyEvent.VK_A);
 
-				boolean isRightBorder = this.ship.getPositionX()
-						+ this.ship.getWidth() + this.ship.getSpeed() > this.width - 1;
-				boolean isLeftBorder = this.ship.getPositionX()
-						- this.ship.getSpeed() < 1;
+            boolean isRightBorder = this.ship.getPositionX()
+                    + this.ship.getWidth() + this.ship.getSpeed() > this.width - 1;
+            boolean isLeftBorder = this.ship.getPositionX()
+                    - this.ship.getSpeed() < 1;
 
-				if (moveRight && !isRightBorder) {
-					this.ship.moveRight();
-				}
-				if (moveLeft && !isLeftBorder) {
-					this.ship.moveLeft();
-				}
-				if (inputManager.isKeyDown(KeyEvent.VK_SPACE))
-					if (this.ship.shoot(this.bullets))
-						this.bulletsShot++;
-			}
+            if (moveRight && !isRightBorder) {
+                this.ship.moveRight();
+            }
+            if (moveLeft && !isLeftBorder) {
+                this.ship.moveLeft();
+            }
 
-			if (this.enemyShipSpecial != null) {
-				if (!this.enemyShipSpecial.isDestroyed())
-					this.enemyShipSpecial.move(2, 0);
-				else if (this.enemyShipSpecialExplosionCooldown.checkFinished())
-					this.enemyShipSpecial = null;
+            if (inputManager.isKeyDown(KeyEvent.VK_SPACE)) {
+                if (this.ship.shoot(this.bullets)) {
+                    this.bulletsShot++;
+                }
+            }
+        }
 
-			}
-			if (this.enemyShipSpecial == null
-					&& this.enemyShipSpecialCooldown.checkFinished()) {
-				this.enemyShipSpecial = new EnemyShip();
-				this.enemyShipSpecialCooldown.reset();
-				this.logger.info("A special ship appears");
-			}
-			if (this.enemyShipSpecial != null
-					&& this.enemyShipSpecial.getPositionX() > this.width) {
-				this.enemyShipSpecial = null;
-				this.logger.info("The special ship has escaped");
-			}
+        if (this.enemyShipSpecial != null) {
+            if (!this.enemyShipSpecial.isDestroyed()) {
+                this.enemyShipSpecial.move(2, 0);
+            } else if (this.enemyShipSpecialExplosionCooldown.checkFinished()) {
+                this.enemyShipSpecial = null;
+            }
+        }
 
-			this.ship.update();
-			this.enemyShipFormation.update();
-			this.enemyShipFormation.shoot(this.bullets);
-			/**
-			 * AUTHORED BY: VFX TEAM (effection)
-			 *
-			 * Ship blinks when lives remain 1.
-			 */
-			this.ship.setBlinking(this.lives > 0
-					&& this.lives <= LOW_HEALTH_LIVES);
+        if (this.enemyShipSpecial == null
+                && this.enemyShipSpecialCooldown.checkFinished()) {
+            this.enemyShipSpecial = new EnemyShip();
+            this.enemyShipSpecialCooldown.reset();
+            this.logger.info("A special ship appears");
+        }
 
-			this.ship.update();
-			this.enemyShipFormation.update();
-		}
+        if (this.enemyShipSpecial != null
+                && this.enemyShipSpecial.getPositionX() > this.width) {
+            this.enemyShipSpecial = null;
+            this.logger.info("The special ship has escaped");
+        }
 
 		manageCollisions();
 		cleanBullets();
 		updateParticles(); // <-*AUTHORED BY: VFX TEAM (Effection)
 		updateCoins();
 		draw();
+        this.ship.update();
+        this.enemyShipFormation.update();
+        this.enemyShipFormation.shoot(this.bullets);
 
-		// Game over sequence, only when the player runs out of lives. AUTHORED BY: VFX TEAM (Effection)
-		if (this.lives == 0 && !this.levelFinished)
-			startGameOverSequence();
-		if (this.gameOverActive) {
-			updateGameOverSequence();
-			return;
-		}
+        /**
+         * AUTHORED BY: VFX TEAM (effection)
+         *
+         * Ship blinks when lives remain 1.
+         */
+        updateLowHealthEffect();
+        this.ship.setBlinking(this.lowHealthActive);
+    }
 
-		if ((this.enemyShipFormation.isEmpty() || this.lives == 0)
-				&& !this.levelFinished) {
-			this.levelFinished = true;
-			this.screenFinishedCooldown.reset();
+    manageCollisions();
+    cleanBullets();
+    updateCoins();
+    updateAchievementPopup();
+    draw();
 
-			// Level cleared alive: level N is worth N diamonds, kept pending
-			// until cashed out (see engine.DiamondManager), and coins still
-			// falling are collected so the last kills' drops aren't lost.
-			if (this.enemyShipFormation.isEmpty() && this.lives > 0) {
-				this.pendingDiamonds += this.level;
-				collectRemainingCoins();
-			}
-		}
+    // Game over sequence, only when the player runs out of lives.
+    // AUTHORED BY: VFX TEAM (Effection)
+    if (this.lives == 0 && !this.levelFinished) {
+        startGameOverSequence();
+    }
 
-		if (this.levelFinished && this.screenFinishedCooldown.checkFinished())
+    if (this.gameOverActive) {
+        updateGameOverSequence();
+        return;
+    }
+
+    if ((this.enemyShipFormation.isEmpty() || this.lives == 0)
+            && !this.levelFinished) {
+        this.levelFinished = true;
+        this.screenFinishedCooldown.reset();
+
+        // Level cleared alive: level N is worth N diamonds, kept pending
+        // until cashed out (see engine.DiamondManager), and coins still
+        // falling are collected so the last kills' drops aren't lost.
+        if (this.enemyShipFormation.isEmpty() && this.lives > 0) {
+            this.pendingDiamonds += this.level;
+            collectRemainingCoins();
+        }
+    }
+
+		if (this.levelFinished && this.screenFinishedCooldown.checkFinished()) {
 			this.isRunning = false;
-
+		}
 	}
-
 	/**
 	 * Starts the game over sequence: the player ship explodes, then after a
 	 * pause the remaining enemies shrink away row by row.
@@ -478,6 +530,11 @@ public class GameScreen extends Screen {
 	private void draw() {
 		drawManager.initDrawing(this);
 
+		// Screen shake: move game world only. AUTHORED BY: VFX TEAM (Effection)
+		this.screenShake.update();
+		drawManager.setWorldOffset(this.screenShake.getOffsetX(),
+				this.screenShake.getOffsetY());
+
 		drawManager.drawEntity(this.ship, this.ship.getPositionX(),
 				this.ship.getPositionY());
 		if (this.enemyShipSpecial != null)
@@ -497,10 +554,20 @@ public class GameScreen extends Screen {
 
 		// Damage dim (under HUD, so score/lives stay bright). AUTHORED BY: VFX TEAM (Effection)
 		drawManager.drawDamageDim(this, this.damageDim);   // ADD
+		// Stop shake offset before full-screen dim.
+		drawManager.setWorldOffset(0, 0);
 
+		// Damage dim (under HUD, so score/lives stay bright). AUTHORED BY: VFX TEAM (Effection)
+		drawManager.drawDamageDim(this, this.damageDim);
+
+		// Coins are part of the game world, so they shake too.
+		drawManager.setWorldOffset(this.screenShake.getOffsetX(),
+				this.screenShake.getOffsetY());
 		for (Coin coin : this.coins)
 			drawManager.drawCoin(coin, coin.getPositionX(),
 					coin.getPositionY());
+		// HUD must stay still: remove shake offset.
+		drawManager.setWorldOffset(0, 0);
 
 		// Interface.
 		drawManager.drawScore(this, this.score);
@@ -508,22 +575,14 @@ public class GameScreen extends Screen {
 		drawManager.drawCoinBalance(this, CurrencyManager.getInstance()
 				.getCoins());
 		drawManager.drawHorizontalLine(this, SEPARATION_LINE_HEIGHT - 1);
-		if (this.unlockedAchievement != null) {
-			drawManager.drawAchievementUnlocked(this, this.unlockedAchievement);
-			if (this.achievementPopupCooldown.checkFinished())
-				this.unlockedAchievement = null;
-		}
-
 		// Low-health glitch (covers game + HUD). AUTHORED BY: VFX TEAM (Effection)
-		this.glitch.setEnabled(this.lives > 0
-				&& this.lives <= LOW_HEALTH_LIVES && !this.levelFinished);
+		this.glitch.setEnabled(this.lowHealthActive && !this.levelFinished);
 		drawManager.drawGlitch(this, this.glitch);
-
 		// Countdown to game start.
 		if (!this.inputDelay.checkFinished()) {
 			int countdown = (int) ((INPUT_DELAY
 					- (System.currentTimeMillis()
-							- this.gameStartTime)) / 1000);
+					- this.gameStartTime)) / 1000);
 			drawManager.drawCountDown(this, this.level, countdown,
 					this.bonusLife);
 			drawManager.drawHorizontalLine(this, this.height / 2 - this.height
@@ -531,6 +590,19 @@ public class GameScreen extends Screen {
 			drawManager.drawHorizontalLine(this, this.height / 2 + this.height
 					/ 12);
 		}
+
+		// Game over animation. AUTHORED BY: VFX TEAM (Effection)
+		if (this.shrinkingEnemies != null)
+			drawShrinkingEnemies();
+		if (this.showGameOverText)
+			drawGameOverSequence();
+
+		// Draw the notification after every gameplay and HUD element.
+		if (this.unlockedAchievement != null)
+			drawManager.drawAchievementUnlocked(this, this.unlockedAchievement,
+					System.currentTimeMillis() - this.achievementPopupStartedAt,
+					ACHIEVEMENT_POPUP_INTERVAL, ACHIEVEMENT_POPUP_SLIDE_IN,
+					ACHIEVEMENT_POPUP_SLIDE_OUT);
 
 		// Game over animation. AUTHORED BY: VFX TEAM (Effection)
 		if (this.shrinkingEnemies != null)
@@ -589,7 +661,8 @@ public class GameScreen extends Screen {
 					if (!this.ship.isDestroyed()) {
 						this.ship.destroy();
 						this.lives--;
-						this.damageDim.trigger(this.lives <= 1 ? 1f : 0.35f); // <-*AUTHORED BY: VFX TEAM (Effection)
+						// this.logger.info("PLAYER_HIT event emitted");
+						GameEvents.emit(GameEvents.Type.PLAYER_HIT, this.lives); // <-*AUTHORED BY: VFX TEAM (Effection)
 						this.logger.info("Hit on player ship, " + this.lives
 								+ " lives remaining.");
 					}
@@ -602,6 +675,7 @@ public class GameScreen extends Screen {
 						this.shipsDestroyed++;
 						this.enemyShipFormation.destroy(enemyShip);
 						spawnSparkles(enemyShip); // <-*AUTHORED BY: VFX TEAM (Effection)
+						this.screenShake.trigger();
 						maybeDropCoin(enemyShip);
 						showUnlockedAchievement(Core.getAchievementManager()
 								.recordEnemyDefeated());
@@ -614,6 +688,7 @@ public class GameScreen extends Screen {
 					this.shipsDestroyed++;
 					this.enemyShipSpecial.destroy();
 					spawnSparkles(this.enemyShipSpecial); // <-*AUTHORED BY: VFX TEAM (Effection)
+					this.screenShake.trigger();
 					dropCoin(this.enemyShipSpecial, BONUS_COIN_VALUE);
 					showUnlockedAchievement(Core.getAchievementManager()
 							.recordEnemyDefeated());
@@ -700,15 +775,35 @@ public class GameScreen extends Screen {
 	 * @param achievement Newly unlocked achievement, if any.
 	 */
 	private void showUnlockedAchievement(final Achievement achievement) {
-		if (achievement != null) {
-			this.unlockedAchievement = achievement;
-			this.achievementPopupCooldown.reset();
+		if (achievement != null)
+			this.achievementPopupQueue.add(achievement);
+	}
+
+	/** Advances the unlock-popup queue without interrupting gameplay. */
+	private void updateAchievementPopup() {
+		if (this.unlockedAchievement == null) {
+			startNextAchievementPopup();
+			return;
+		}
+
+		if (System.currentTimeMillis() - this.achievementPopupStartedAt
+				>= ACHIEVEMENT_POPUP_INTERVAL) {
+			this.unlockedAchievement = null;
+			startNextAchievementPopup();
+		}
+	}
+
+	/** Starts the next queued unlock notification, if there is one. */
+	private void startNextAchievementPopup() {
+		if (!this.achievementPopupQueue.isEmpty()) {
+			this.unlockedAchievement = this.achievementPopupQueue.remove();
+			this.achievementPopupStartedAt = System.currentTimeMillis();
 		}
 	}
 
 	/**
 	 * Checks if two entities are colliding.
-	 * 
+	 *
 	 * @param a
 	 *            First entity, the bullet.
 	 * @param b
@@ -733,7 +828,7 @@ public class GameScreen extends Screen {
 
 	/**
 	 * Returns a GameState object representing the status of the game.
-	 * 
+	 *
 	 * @return Current game state.
 	 */
 	public final GameState getGameState() {
