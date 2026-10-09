@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import engine.CoinDropManager;
@@ -24,6 +25,7 @@ import engine.Achievement;
 import engine.DamageDimEffect;
 import engine.GameEvents;
 import engine.GlitchEffect;
+import engine.MeteorSpawner;
 import engine.ScreenShake;
 import entity.Bullet;
 import entity.BulletPool;
@@ -32,6 +34,7 @@ import entity.CoinPool;
 import entity.EnemyShip;
 import entity.EnemyShipFormation;
 import entity.Entity;
+import entity.Meteor;
 import entity.Ship;
 
 /**
@@ -95,6 +98,11 @@ public class GameScreen extends Screen {
 	private static final int COIN_VALUE = 1;
 	/** Coins guaranteed when the special bonus ship is destroyed. */
 	private static final int BONUS_COIN_VALUE = 5;
+	// Bonus meteor flight band. AUTHORED BY: VFX TEAM (Effection)
+	/** Space kept below the HUD line at the meteor's highest start. */
+	private static final int METEOR_TOP_MARGIN = 4;
+	/** Space kept above the player ship at the end of the meteor's fall. */
+	private static final int METEOR_PLAYER_MARGIN = 30;
 
 	/** Current game difficulty settings. */
 	private GameSettings gameSettings;
@@ -164,6 +172,11 @@ public class GameScreen extends Screen {
 	private GlitchEffect glitch;
 	/** Screen shake when an enemy is destroyed. */
 	private ScreenShake screenShake;
+	/** Decides when the bonus meteor appears. AUTHORED BY: VFX TEAM (Effection) */
+	private MeteorSpawner meteorSpawner;
+	/** Bonus meteor on screen (flying or bursting), null when none. */
+	private Meteor meteor;
+
 	/** Diamonds earned this run but not yet cashed out; lost on death,
 	 * banked into DiamondManager only when the player cashes out. */
 	/** Timer for the low-life effect. */
@@ -231,6 +244,7 @@ public class GameScreen extends Screen {
 				new java.awt.Color(150, 0, 0));  //new update dim effect
 		this.glitch = new GlitchEffect();
 		this.screenShake = new ScreenShake();
+		this.meteorSpawner = new MeteorSpawner(this.level,Core.getNumLevels(), new Random());
 		this.lowHealthTimer = Core.getCooldown(LOW_HEALTH_EFFECT_DURATION);
 		this.prevLives = this.lives;  
 		this.lowHealthActive = false;
@@ -320,6 +334,7 @@ public class GameScreen extends Screen {
 			this.ship.update();
 			this.enemyShipFormation.update();
 			this.enemyShipFormation.shoot(this.bullets);
+			trySpawnMeteor();
 			/**
 			 * AUTHORED BY: VFX TEAM (effection)
 			 *
@@ -335,6 +350,7 @@ public class GameScreen extends Screen {
 		manageCollisions();
 		cleanBullets();
 		updateCoins();
+		updateMeteor();
 		updateAchievementPopup();
 		draw();
 
@@ -381,6 +397,8 @@ public class GameScreen extends Screen {
 
 		BulletPool.recycle(this.bullets);
 		this.bullets.clear();
+        // No bonus meteor during the game over animation.
+		this.meteor = null;
 
 		// Clears explosions left from enemies shot just before.
 		this.enemyShipFormation.removeDestroyed();
@@ -530,6 +548,10 @@ public class GameScreen extends Screen {
 		for (Bullet bullet : this.bullets)
 			drawManager.drawEntity(bullet, bullet.getPositionX(),
 					bullet.getPositionY());
+		// Bonus meteor. AUTHORED BY: VFX TEAM (Effection)
+		if (this.meteor != null)
+			drawManager.drawMeteor(this.meteor);
+
 		// Stop shake offset before full-screen dim.
 		drawManager.setWorldOffset(0, 0);
 		// Damage dim (under HUD, so score/lives stay bright). AUTHORED BY: VFX TEAM (Effection)
@@ -646,6 +668,19 @@ public class GameScreen extends Screen {
 					this.enemyShipSpecialExplosionCooldown.reset();
 					recyclable.add(bullet);
 				}
+				// Bonus meteor: only player bullets can hit it.
+				// AUTHORED BY: VFX TEAM (Effection)
+				if (this.meteor != null && !this.meteor.isBursting()
+						&& !recyclable.contains(bullet)
+						&& checkCollision(bullet, this.meteor)) {
+					this.meteor.burst();
+					CurrencyManager.getInstance().addCoins(
+							this.meteor.getCoinValue());
+					this.logger.info("Meteor shot, +"
+							+ this.meteor.getCoinValue() + " coins, balance: "
+							+ CurrencyManager.getInstance().getCoins());
+					recyclable.add(bullet);
+				}
 			}
 		this.bullets.removeAll(recyclable);
 		BulletPool.recycle(recyclable);
@@ -718,6 +753,69 @@ public class GameScreen extends Screen {
 				+ CurrencyManager.getInstance().getCoins());
 		CoinPool.recycle(this.coins);
 		this.coins.clear();
+	}
+
+	/**
+	 * Asks the spawner whether the bonus meteor should appear and, if so,
+	 * sends it in on a random path: random side, angle, curve, height and
+	 * speed, so the player can't predict it. The whole path always ends
+	 * above the player. Only called during normal gameplay.
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 */
+	private void trySpawnMeteor() {
+		int enemiesLeft = 0;
+		for (EnemyShip enemyShip : this.enemyShipFormation)
+			if (!enemyShip.isDestroyed())
+				enemiesLeft++;
+
+		long now = System.currentTimeMillis();
+		if (!this.meteorSpawner.shouldSpawn(now, enemiesLeft,
+				this.meteor != null))
+			return;
+
+		// Random path for this meteor.
+		double startAngle = this.meteorSpawner.rollStartAngle();
+		double endAngle = this.meteorSpawner.rollEndAngle(startAngle);
+
+		// The path must fit between the HUD line and the space above the
+		// player; if it falls too much, make it flatter just enough to fit.
+		int topY = SEPARATION_LINE_HEIGHT + METEOR_TOP_MARGIN;
+		int bottomY = this.ship.getPositionY() - METEOR_PLAYER_MARGIN
+				- Meteor.SIZE;
+		int room = bottomY - topY;
+		int drop = Meteor.getTotalDrop(this.width, startAngle, endAngle);
+		if (drop > room) {
+			double scale = (double) room / drop;
+			startAngle = Math.toDegrees(Math.atan(scale
+					* Math.tan(Math.toRadians(startAngle))));
+			endAngle = Math.toDegrees(Math.atan(scale
+					* Math.tan(Math.toRadians(endAngle))));
+			drop = Meteor.getTotalDrop(this.width, startAngle, endAngle);
+		}
+		int maxStartY = Math.max(topY, bottomY - drop);
+
+		this.meteor = new Meteor(this.meteorSpawner.rollFromLeft(),
+				this.meteorSpawner.rollHeight(topY, maxStartY), this.width,
+				this.meteorSpawner.getCrossTime(), startAngle, endAngle,
+				MeteorSpawner.METEOR_COIN_VALUE, new Random());
+		this.meteorSpawner.markSpawned(now);
+		this.logger.info("A meteor appears");
+	}
+	/**
+	 * Moves the bonus meteor and removes it once it leaves the screen or
+	 * its burst has finished playing.
+	 * AUTHORED BY: VFX TEAM (Effection)
+	 */
+	private void updateMeteor() {
+		if (this.meteor == null)
+			return;
+		this.meteor.update();
+		if (this.meteor.isOffScreen(this.width)) {
+			this.meteor = null;
+			this.logger.info("The meteor has passed");
+		} else if (this.meteor.isBurstFinished()) {
+			this.meteor = null;
+		}
 	}
 
 	/**
