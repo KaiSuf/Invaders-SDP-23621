@@ -309,6 +309,15 @@ public final class Core {
 	public static Logger getLogger() {
 		return LOGGER;
 	}
+    /**AUTHORED BY: VFX TEAM (Effection)
+	 * Gets the total number of levels, e.g. so per-level features know
+	 * which level is the last one.
+	 *
+	 * @return Number of levels in the game.
+	 */
+	public static int getNumLevels() {
+		return NUM_LEVELS;
+	}
 
 	/**
 	 * Controls access to the drawing manager.
